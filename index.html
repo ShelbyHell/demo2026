@@ -2487,18 +2487,18 @@ br-rtr(config)#ip nat source static tcp 192.168.0.2 2026 172.16.2.2 2026
 br-rtr(config)#write memory</code></pre>
   
 Проверяем статическую трансляцию портов:
-  <img src="./screenshots/nat-trans.png" class="screenshot" alt="Проверка статической трансляции портов"> 
+  <img src="./screenshots/nat-translations/nat-trans.png" class="screenshot" alt="Проверка статической трансляции портов"> 
 
 
 Проверяем возможность доступа из-вне до веб приложения развёрнутого на базе стека контейнеров с браузера на клиенте:
-  <img src="./screenshots/nat-trans1.png" class="screenshot" alt="Проверка возможности доступа из-вне до веб приложения"> 
+  <img src="./screenshots/nat-translations/nat-trans1.png" class="screenshot" alt="Проверка возможности доступа из-вне до веб приложения"> 
 
 Проверяем возможность доступа из-вне до веб приложения развёрнутого на базе веб сервера Apache с виртуальной машины ISP:
-  <img src="./screenshots/nat-trans2.png" class="screenshot" alt="Проверка возможности доступа из-вне до веб приложения">
+  <img src="./screenshots/nat-translations/nat-trans2.png" class="screenshot" alt="Проверка возможности доступа из-вне до веб приложения">
   
 Проверяем возможность доступа из-вне по SSH с виртуальной машины ISP:
   до HQ-SRV:  
-  <img src="./screenshots/nat-trans3.png" class="screenshot" alt="Проверка возможности доступа из-вне по SSH"> 
+  <img src="./screenshots/nat-translations/nat-trans3.png" class="screenshot" alt="Проверка возможности доступа из-вне по SSH"> 
 
   до BR-SRV:
   <img src="./screenshots/nat-trans4.png" class="screenshot" alt="Проверка возможности доступа из-вне до веб приложения"> 
@@ -2516,7 +2516,7 @@ br-rtr(config)#write memory</code></pre>
   Настроить nginx как реверсивный прокси сервер, приведя файл /etc/nginx/sites-available.d/default.conf к следующему виду:
     <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">cisco</span></div><code class="language-bash">[root@isp ~]# vim /etc/nginx/sites-available.d/default.conf</code></pre>
     <div class="kbd-strip"><span class="label">vim:</span><span class="item"><kbd class="k">i</kbd> / <kbd class="k">Esc</kbd> <span class="desc">— войти в insert / вернуться в command</span></span><span class="item"><kbd class="k">:w</kbd> <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">:q</kbd> / <kbd class="k">:q!</kbd> <span class="desc">— выйти / выйти без сохранения</span></span><span class="item"><kbd class="k">/</kbd>текст <kbd class="k">Enter</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">dd</kbd> / <kbd class="k">yy</kbd> / <kbd class="k">p</kbd> <span class="desc">— удалить / скопировать / вставить строку</span></span><span class="item"><kbd class="k">u</kbd> <span class="desc">— отменить</span></span></div>
-    <img src="./screenshots/nginx1.png" class="screenshot" alt="Настройка nginx как реверсивного прокси сервера"> 
+    <img src="./screenshots/nginx/nginx1.png" class="screenshot" alt="Настройка nginx как реверсивного прокси сервера"> 
   Добавить символическую ссылку на данный файл:
     <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@isp ~]# ln -s /etc/nginx/sites-available.d/default.conf /etc/nginx/sites-enabled/default.conf</code></pre>
   Перезапустить службу nginx:
@@ -2524,13 +2524,13 @@ br-rtr(config)#write memory</code></pre>
 
   Поскольку в домене SambaDC нет DNS записей ссылающихся на необходимые имена, а на HQ-CLI в качестве DNS-сервера задан адрес именно контроллера домена, поэтому необходимо добавить записи в файл /etc/hosts на виртуальной машине HQ-CLI:
     <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[stud@hq-cli ~]$ sudo vim /etc/hosts</code></pre>
-    <div class="kbd-strip"><span class="label">vim:</span><span class="item"><kbd class="k">i</kbd> / <kbd class="k">Esc</kbd> <span class="desc">— войти в insert / вернуться в command</span></span><span class="item"><kbd class="k">:w</kbd> <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">:q</kbd> / <kbd class="k">:q!</kbd> <span class="desc">— выйти / выйти без сохранения</span></span><span class="item"><kbd class="k">/</kbd>текст <kbd class="k">Enter</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">dd</kbd  / <kbd class="k">yy</kbd> / <kbd class="k">p</kbd> <span class="desc">— удалить / скопировать / вставить строку</span></span><span class="item"><kbd class="k">u</kbd> <span class="desc">— отменить</span></span></div>
+    <div class="kbd-strip"><span class="label">vim:</span><span class="item"><kbd class="k">i</kbd> / <kbd class="k">Esc</kbd> <span class="desc">— войти в insert / вернуться в command</span></span><span class="item"><kbd class="k">:w</kbd> <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">:q</kbd> / <kbd class="k">:q!</kbd> <span class="desc">— выйти / выйти без сохранения</span></span><span class="item"><kbd class="k">/</kbd>текст <kbd class="k">Enter</kbd> <span class="desc">— поиск</span></ span>< spanclass ="item" >< kbdclass ="k" > dd </ kbd >  / < kbdclass ="k" > yy </ kbd > / < kbdclass ="k" > p </ kbd > < spanclass ="desc" > — удалить / скопировать / вставить строку </ span > </ span >< spanclass ="item" >< kbdclass ="k" > u </ kbd > < spanclass ="desc" > — отменить </ span > </ span ></ div >
     <img src="./screenshots/hosts.png" class="screenshot" alt="Добавление записей в файл /etc/hosts">
 
   Проверяем доступ до веб приложения testapp с браузера на клиенте:
-    <img src="./screenshots/nginx2.png" class="screenshot" alt="Проверка доступа до веб приложения testapp"> 
+    <img src="./screenshots/nginx/nginx2.png" class="screenshot" alt="Проверка доступа до веб приложения testapp"> 
   Проверяем доступ до веб приложения на HQ-SRV с браузера на клиенте:
-    <img src="./screenshots/nginx3.png" class="screenshot" alt="Проверка доступа до веб приложения на HQ-SRV">
+    <img src="./screenshots/nginx/nginx3.png" class="screenshot" alt="Проверка доступа до веб приложения на HQ-SRV">
   
   </section>
 
@@ -2542,17 +2542,17 @@ br-rtr(config)#write memory</code></pre>
     <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@isp ~]# apt-get install -y apache2-htpasswd</code></pre>
   Средствами утилиты htpasswd создать пользователя WEB и добавить информацию о нём в файл /etc/nginx/.htpasswd, задав пароль P@ssw0rd:
   <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">htpasswd –c /etc/nginx/.htpasswd WEB</code></pre>
-  <img src="./screenshots/web-auth.png" class="screenshot" alt="Создание пользователя WEB для web-based аутентификации в nginx">
+  <img src="./screenshots/web-auth/web-auth.png" class="screenshot" alt="Создание пользователя WEB для web-based аутентификации в nginx">
   Добавить web-based аутентификацию для доступа к сайту web.au-team.irpo в конфигурационный файл /etc/nginx/sites-available.d/default.conf:
     <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@isp ~]# vim /etc/nginx/sites-available.d/default.conf
 </code></pre>
-    <div class="kbd-strip"><span class="label">vim:</span><span class="item"><kbd class="k">i</kbd> / <kbd class="k">Esc</kbd> <span class="desc">— войти в insert / вернуться в command</span></span><span class="item"><kbd class="k">:w</kbd> <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">:q</kbd> / <kbd class="k">:q!</kbd> <span class="desc">— выйти / выйти без сохранения</span></span><span class="item"><kbd class="k">/</kbd>текст <kbd class="k">Enter</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">dd</kbd> / <kbd class="k">yy</kbd> / <kbd class="k">p</kbd> <span class="desc">— удалить / скопировать / вставить строку</span></span><span class="item"><kbd class="k">u</kbd> <span class="desc">— отменить</span></span></div>
-    <img src="./screenshots/web-auth-2.png" class="screenshot" alt="Добавление web-based аутентификации для доступа к сайту web.au-team.irpo в конфигурационный файл nginx">
+    <div class="kbd-strip"><span class="label">vim:</span><span class="item"><kbd class="k">i</kbd> / <kbd class="k">Esc</kbd> <span class="desc">— войти в insert / вернуться в command</span></span><span class="item"><kbd class="k">:w</kbd> <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">:q</kbd> / <kbd class="k">:q!</kbd> <span class="desc">— выйти / выйти без сохранения</span></span><span class="item"><kbd class="k">/</kbd>текст <kbd class="k">Enter</kbd> <span class="desc">— поиск</span></ span>< spanclass ="item" >< kbdclass ="k" > dd </ kbd >  / < kbdclass ="k" > yy </ kbd > / < kbdclass ="k" > p </ kbd > < spanclass ="desc" > — удалить / скопировать / вставить строку </ span > </ span >< spanclass ="item" >< kbdclass ="k" > u </ kbd > < spanclass ="desc" > — отменить </ span > </ span ></ div >
+    <img src="./screenshots/web-auth/web-auth-2.png" class="screenshot" alt="Добавление web-based аутентификации для доступа к сайту web.au-team.irpo в конфигурационный файл nginx">
   Перезапустить службу nginx:
     <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@isp ~]# systemctl restart nginx</code></pre>
   Проверяем доступ до веб приложения на HQ-SRV с браузера на клиенте — при попытке доступа должно появляться окно аутентификации, и после ввода правильного логина и пароля должно открываться веб приложение:
-    <img src="./screenshots/web-auth-3.png" class="screenshot" alt="Проверка web-based аутентификации для доступа к сайту web.au-team.irpo"> 
-    <img src="./screenshots/web-auth-4.png" class="screenshot" alt="Проверка web-based аутентификации для доступа к сайту testapp"> 
+    <img src="./screenshots/web-auth/web-auth-3.png" class="screenshot" alt="Проверка web-based аутентификации для доступа к сайту web.au-team.irpo"> 
+    <img src="./screenshots/web-auth/web-auth-4.png" class="screenshot" alt="Проверка web-based аутентификации для доступа к сайту testapp"> 
   </section>
 
   <section id="yandex-browser">
