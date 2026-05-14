@@ -738,7 +738,8 @@
       <li><a href="#chrony">NTP (chrony) на ISP</a></li>
       <li><a href="#ansible">Ansible на BR-SRV</a></li>
       <li><a href="#docker">Docker на BR-SRV</a></li>
-      <li><a href="#static-nat">Статический NAT</a></li>  
+      <li><a href="#static-nat">Статический NAT</a></li> 
+      <li><a href="#nginx-setup">Настройка Nginx</a></li> 
     </ol>
   </aside>
 
@@ -804,6 +805,17 @@
         <div class="title">Не закрывать окна с EcoRouter!</div>
         <div class="text">
           Терминальные окна с <strong>HQ-RTR</strong> и <strong>BR-RTR</strong> должны оставаться открытыми всё время работы. При закрытии окна теряется консольная сессия EcoRouter — конфигурация в RAM может потеряться, а внешний реконнект к роутеру не предусмотрен. Сворачивать окно — можно, закрывать — нельзя. Перед любыми перезагрузками — обязательно <code>write memory</code>.
+        </div>
+      </div>
+    </div>
+
+    <!-- ⚠️ КРИТИЧЕСКИЙ ДИСКЛЕЙМЕР: НЕ закрывать окна с EcoRouter -->
+    <div class="alert-banner" role="alert">
+      <span class="siren">🚨</span>
+      <div class="body">
+        <div class="title">ВНИМАТЕЛЬНО ЧИТАЕМ И ПИШЕМ КОМАНДЫ!</div>
+        <div class="text">
+          Все команды в методичке проверены и отформатированы, но при копировании в терминал могут добавляться лишние символы (например, невидимые пробелы). Если команда не работает, не паникуем, а аккуратно вводим её вручную, следя за каждым символом. Особенно это важно для команд с кавычками, скобками и другими специальными символами.
         </div>
       </div>
     </div>
@@ -2490,7 +2502,34 @@ br-rtr(config)#write memory</code></pre>
   <img src="./screenshots/nat-trans4.png" class="screenshot" alt="Проверка возможности доступа из-вне до веб приложения"> 
 
   </section>
+  <section id="nginx-setup">
+  <h2><span class="num">22</span>🐳 Настройте веб-сервер nginx как обратный прокси-сервер на ISP</h2>  
+  <p>Задание:
+  При обращении по доменному имени web.au-team.irpo у клиента должно открываться веб приложение на HQ-SRV
+  При обращении по доменному имени docker.au-team.irpo клиента должно открываться веб приложение testapp.</p>
+  
+  ISP:
+  <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">cisco</span></div><code class="language-bash">[root@isp ~]# apt-get install -y nginx</code></pre>
+  
+  Настроить nginx как реверсивный прокси сервер, приведя файл /etc/nginx/sites-available.d/default.conf к следующему виду:
+    <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">cisco</span></div><code class="language-bash">[root@isp ~]# vim /etc/nginx/sites-available.d/default.conf</code></pre>
+    <div class="kbd-strip"><span class="label">vim:</span><span class="item"><kbd class="k">i</kbd> / <kbd class="k">Esc</kbd> <span class="desc">— войти в insert / вернуться в command</span></span><span class="item"><kbd class="k">:w</kbd> <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">:q</kbd> / <kbd class="k">:q!</kbd> <span class="desc">— выйти / выйти без сохранения</span></span><span class="item"><kbd class="k">/</kbd>текст <kbd class="k">Enter</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">dd</kbd> / <kbd class="k">yy</kbd> / <kbd class="k">p</kbd> <span class="desc">— удалить / скопировать / вставить строку</span></span><span class="item"><kbd class="k">u</kbd> <span class="desc">— отменить</span></span></div>
+    <img src="./screenshots/nginx1.png" class="screenshot" alt="Настройка nginx как реверсивного прокси сервера"> 
+  Добавить символическую ссылку на данный файл:
+    <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@isp ~]# ln -s /etc/nginx/sites-available.d/default.conf /etc/nginx/sites-enabled/default.conf</code></pre>
+  Перезапустить службу nginx:
+    <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@isp ~]# systemctl restart nginx</code></pre>
 
+  Поскольку в домене SambaDC нет DNS записей ссылающихся на необходимые имена, а на HQ-CLI в качестве DNS-сервера задан адрес именно контроллера домена, поэтому необходимо добавить записи в файл /etc/hosts на виртуальной машине HQ-CLI:
+    <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[stud@hq-cli ~]$ sudo vim /etc/hosts</code></pre>
+    <div class="kbd-strip"><span class="label">vim:</span><span class="item"><kbd class="k">i</kbd> / <kbd class="k">Esc</kbd> <span class="desc">— войти в insert / вернуться в command</span></span><span class="item"><kbd class="k">:w</kbd> <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">:q</kbd> / <kbd class="k">:q!</kbd> <span class="desc">— выйти / выйти без сохранения</span></span><span class="item"><kbd class="k">/</kbd>текст <kbd class="k">Enter</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">dd</kbd  / <kbd class="k">yy</kbd> / <kbd class="k">p</kbd> <span class="desc">— удалить / скопировать / вставить строку</span></span><span class="item"><kbd class="k">u</kbd> <span class="desc">— отменить</span></span></div>
+    <img src="./screenshots/hosts.png" class="screenshot" alt="Добавление записей в файл /etc/hosts">
+
+  Проверяем доступ до веб приложения testapp с браузера на клиенте:
+    <img src="./screenshots/nginx2.png" class="screenshot" alt="Проверка доступа до веб приложения testapp"> 
+  Проверяем доступ до веб приложения на HQ-SRV с браузера на клиенте:
+    <img src="./screenshots/nginx3.png" class="screenshot" alt="Проверка доступа до веб приложения на HQ-SRV">
+  
   </section>
     <!-- ===== Конец модуля 2 (продолжается) ===== -->
     <div class="module-end">модуль 2 — продолжение следует</div>
