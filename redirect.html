@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Методичка — HQ ↔ BR</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Unbounded:wght@400;700;900&display=swap');
+
+```
+:root {
+  --bg: #0b0f14;
+  --surface: #131920;
+  --border: #1e2d3d;
+  --accent: #00d4ff;
+  --accent2: #7b61ff;
+  --text: #c8d8e8;
+  --muted: #4a6070;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Grid background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* Glow blobs */
+body::after {
+  content: '';
+  position: fixed;
+  top: -200px;
+  left: -200px;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(0,212,255,0.07) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.blob2 {
+  position: fixed;
+  bottom: -200px;
+  right: -200px;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(123,97,255,0.07) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.card {
+  position: relative;
+  z-index: 10;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 48px 52px;
+  max-width: 560px;
+  width: 90%;
+  box-shadow: 0 0 0 1px rgba(0,212,255,0.05), 0 40px 80px rgba(0,0,0,0.5);
+  animation: fadeIn 0.6s ease both;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.tag {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid rgba(0,212,255,0.3);
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 2px;
+  margin-bottom: 20px;
+}
+
+h1 {
+  font-family: 'Unbounded', sans-serif;
+  font-size: clamp(22px, 4vw, 30px);
+  font-weight: 900;
+  line-height: 1.2;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+h1 span {
+  color: var(--accent);
+}
+
+.subtitle {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 32px;
+  line-height: 1.7;
+}
+
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, var(--border), transparent);
+  margin-bottom: 32px;
+}
+
+.info-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.info-row .key {
+  color: var(--accent2);
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.info-row .val {
+  color: var(--text);
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 36px;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, rgba(0,212,255,0.12), rgba(123,97,255,0.08));
+  border: 1px solid rgba(0,212,255,0.35);
+  border-radius: 3px;
+  color: #fff;
+  text-decoration: none;
+  font-family: 'Unbounded', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  transition: all 0.2s;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0,212,255,0.15), rgba(123,97,255,0.1));
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.btn:hover::before { opacity: 1; }
+
+.btn:hover {
+  border-color: rgba(0,212,255,0.7);
+  box-shadow: 0 0 20px rgba(0,212,255,0.15);
+  transform: translateY(-1px);
+}
+
+.btn-arrow {
+  font-size: 18px;
+  transition: transform 0.2s;
+}
+
+.btn:hover .btn-arrow { transform: translateX(4px); }
+
+.footer-note {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+}
+
+.dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-right: 6px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+```
+
+  </style>
+</head>
+<body>
+  <div class="blob2"></div>
+
+  <div class="card">
+    <div class="tag"><span class="dot"></span>Демоэкзамен 2026</div>
+    <h1>Настройка сети<br><span>HQ ↔ BR</span></h1>
+    <p class="subtitle">
+      Пошаговая методичка для настройки корпоративной инфраструктуры:<br>
+      EcoRouter · ALT Linux · GRE · OSPF · Samba DC · Docker
+    </p>
+    <div class="divider"></div>
+
+```
+<div class="info-row">
+  <span class="key">модули</span>
+  <span class="val">Сеть + Сервисы + Аутентификация</span>
+</div>
+<div class="info-row">
+  <span class="key">платформа</span>
+  <span class="val">ALT Linux p10 · EcoRouter</span>
+</div>
+<div class="info-row">
+  <span class="key">разделов</span>
+  <span class="val">22 раздела · от базовой настройки до Docker</span>
+</div>
+<div class="info-row">
+  <span class="key">автор</span>
+  <span class="val">shelbyhell · au-team.irpo</span>
+</div>
+
+<a class="btn" href="https://shelbyhell.github.io/demo2026/" target="_blank">
+  <span>Открыть методичку</span>
+  <span class="btn-arrow">→</span>
+</a>
+
+<p class="footer-note">shelbyhell.github.io/demo2026</p>
+```
+
+  </div>
+</body>
+</html>
