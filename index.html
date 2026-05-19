@@ -279,6 +279,13 @@
 
       <h3>HQ-RTR</h3>
       <h4>Hostname и домен</h4>
+      <!-- ⚠️ КРИТИЧЕСКИЙ ДИСКЛЕЙМЕР: НЕ закрывать окна с EcoRouter -->
+    <div class="alert-banner" role="alert">
+      <span class="siren">🚨</span>
+      <div class="body">
+        <div class="title">ВНИМАТЕЛЬНО ЧИТАЕМ И ПИШЕМ КОМАНДЫ!</div>
+      </div>
+    </div>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">cisco</span></div><code class="language-plaintext">ecorouter#enable
 ecorouter#configure terminal
 ecorouter(config)#hostname hq-rtr
@@ -329,6 +336,13 @@ hq-rtr#show ip interface brief</code></pre>
 
       <h3>BR-RTR</h3>
       <h4>Hostname и домен</h4>
+      <!-- ⚠️ КРИТИЧЕСКИЙ ДИСКЛЕЙМЕР: НЕ закрывать окна с EcoRouter -->
+    <div class="alert-banner" role="alert">
+      <span class="siren">🚨</span>
+      <div class="body">
+        <div class="title">ВНИМАТЕЛЬНО ЧИТАЕМ И ПИШЕМ КОМАНДЫ!</div>
+      </div>
+    </div>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">cisco</span></div><code class="language-plaintext">ecorouter#enable
 ecorouter#configure terminal
 ecorouter(config)#hostname br-rtr
@@ -339,6 +353,13 @@ br-rtr#show hostname
 br-rtr#show running-config | include domain-name</code></pre>
 
       <h4>LAN-интерфейс int1 и сервисная привязка</h4>
+      <!-- ⚠️ КРИТИЧЕСКИЙ ДИСКЛЕЙМЕР: НЕ закрывать окна с EcoRouter -->
+    <div class="alert-banner" role="alert">
+      <span class="siren">🚨</span>
+      <div class="body">
+        <div class="title">ВНИМАТЕЛЬНО ЧИТАЕМ И ПИШЕМ КОМАНДЫ!</div>
+      </div>
+    </div>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">cisco</span></div><code class="language-plaintext">br-rtr(config)#interface int1
 br-rtr(config-if)#ip address 192.168.0.1/28
 
@@ -354,23 +375,37 @@ br-rtr#write memory
 br-rtr#show ip interface brief</code></pre>
 
       <h3>HQ-SRV</h3>
+      <!-- ⚠️ КРИТИЧЕСКИЙ ДИСКЛЕЙМЕР: НЕ закрывать окна с EcoRouter -->
+    <div class="alert-banner" role="alert">
+      <span class="siren">🚨</span>
+      <div class="body">
+        <div class="title">ВНИМАТЕЛЬНО ЧИТАЕМ И ПИШЕМ КОМАНДЫ!</div>
+      </div>
+    </div>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@alt ~]# hostnamectl set-hostname hq-srv.au-team.irpo; bash
 
-[root@hq-srv ~]# echo "192.168.100.2/27"          >  /etc/net/ifaces/ens19/ipv4address
-[root@hq-srv ~]# echo "default via 192.168.100.1" >  /etc/net/ifaces/ens19/ipv4route
-[root@hq-srv ~]# echo "nameserver 95.167.167.95"  >  /etc/net/ifaces/ens19/resolv.conf
-[root@hq-srv ~]# echo "nameserver 95.167.167.96"  >> /etc/net/ifaces/ens19/resolv.conf
+[root@hq-srv ~]# echo "192.168.100.2/27" > /etc/net/ifaces/ens19/ipv4address
+[root@hq-srv ~]# echo "default via 192.168.100.1" > /etc/net/ifaces/ens19/ipv4route
+[root@hq-srv ~]# echo "nameserver 95.167.167.95" > /etc/net/ifaces/ens19/resolv.conf
+[root@hq-srv ~]# echo "nameserver 95.167.167.96" >> /etc/net/ifaces/ens19/resolv.conf
 
 [root@hq-srv ~]# systemctl restart network
 [root@hq-srv ~]# ip -c a</code></pre>
 
       <h3>BR-SRV</h3>
+      <!-- ⚠️ КРИТИЧЕСКИЙ ДИСКЛЕЙМЕР: НЕ закрывать окна с EcoRouter -->
+    <div class="alert-banner" role="alert">
+      <span class="siren">🚨</span>
+      <div class="body">
+        <div class="title">ВНИМАТЕЛЬНО ЧИТАЕМ И ПИШЕМ КОМАНДЫ!</div>
+      </div>
+    </div>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@alt ~]# hostnamectl set-hostname br-srv.au-team.irpo; bash
 
-[root@br-srv ~]# echo "192.168.0.2/28"            >  /etc/net/ifaces/ens19/ipv4address
-[root@br-srv ~]# echo "default via 192.168.0.1"   >  /etc/net/ifaces/ens19/ipv4route
-[root@br-srv ~]# echo "nameserver 95.167.167.95"  >  /etc/net/ifaces/ens19/resolv.conf
-[root@br-srv ~]# echo "nameserver 95.167.167.96"  >> /etc/net/ifaces/ens19/resolv.conf
+[root@br-srv ~]# echo "192.168.0.2/28" > /etc/net/ifaces/ens19/ipv4address
+[root@br-srv ~]# echo "default via 192.168.0.1" > /etc/net/ifaces/ens19/ipv4route
+[root@br-srv ~]# echo "nameserver 95.167.167.95" > /etc/net/ifaces/ens19/resolv.conf
+[root@br-srv ~]# echo "nameserver 95.167.167.96" >> /etc/net/ifaces/ens19/resolv.conf
 
 [root@br-srv ~]# systemctl restart network
 [root@br-srv ~]# ip -c a</code></pre>
@@ -391,9 +426,10 @@ br-rtr#show ip interface brief</code></pre>
       <div class="callout info">
         <span class="icon">💡</span>
         <div><strong>Альтернатива в терминале</strong>То же самое можно сделать командой:
-          <pre style="margin:6px 0 0;"><code class="language-bash">[stud@hq-cli ~]$ sudo hostnamectl set-hostname hq-cli.au-team.irpo
-[stud@hq-cli ~]$ exec bash
-[stud@hq-cli ~]$ hostname -f</code></pre>
+          <pre style="margin:6px 0 0;"><code class="language-bash">[stud@hq-cli ~]$ su
+[root@hq-cli ~]$ hostnamectl set-hostname hq-cli.au-team.irpo
+[root@hq-cli ~]$ exec bash
+[root@hq-cli ~]$ hostname -f</code></pre>
           Дополнительно — записать имя в <code>/etc/sysconfig/network</code> (параметр <code>HOSTNAME=</code>), чтобы оно сохранилось после перезагрузки независимо от способа.
         </div>
       </div>
@@ -560,7 +596,7 @@ br-rtr#write memory</code></pre>
       </div>
 
       <h3>HQ-SRV</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# echo "Port 2026"                  >> /etc/openssh/sshd_config
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# echo "Port 2026" >> /etc/openssh/sshd_config
 [root@hq-srv ~]# echo "AllowUsers sshuser" >> /etc/openssh/sshd_config
 [root@hq-srv ~]# echo "MaxAuthTries 2" >> /etc/openssh/sshd_config
 [root@hq-srv ~]# echo "Banner /etc/openssh/banner" >> /etc/openssh/sshd_config
