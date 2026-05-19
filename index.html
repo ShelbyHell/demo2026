@@ -296,7 +296,8 @@ hq-rtr#show hostname
 hq-rtr#show running-config | include domain-name</code></pre>
 
       <h4>VLAN-интерфейсы</h4>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">cisco</span></div><code class="language-plaintext">hq-rtr(config)#interface vl100
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">cisco</span></div><code class="language-plaintext">hq-rtr#configure terminal
+hq-rtr(config)#interface vl100
 hq-rtr(config-if)#ip address 192.168.100.1/27
 hq-rtr(config-if)#exit
 
@@ -360,7 +361,8 @@ br-rtr#show running-config | include domain-name</code></pre>
         <div class="title">ВНИМАТЕЛЬНО ЧИТАЕМ И ПИШЕМ КОМАНДЫ!</div>
       </div>
     </div>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">cisco</span></div><code class="language-plaintext">br-rtr(config)#interface int1
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">cisco</span></div><code class="language-plaintext">br-rtr#configure terminal
+br-rtr(config)#interface int1
 br-rtr(config-if)#ip address 192.168.0.1/28
 
 br-rtr(config)#port te1
@@ -606,7 +608,7 @@ br-rtr#write memory</code></pre>
 [root@hq-srv ~]# ssh -p 2026 sshuser@localhost</code></pre>
 
       <h3>BR-SRV</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@br-srv ~]# echo "Port 2026"                  >> /etc/openssh/sshd_config
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@br-srv ~]# echo "Port 2026" >> /etc/openssh/sshd_config
 [root@br-srv ~]# echo "AllowUsers sshuser" >> /etc/openssh/sshd_config
 [root@br-srv ~]# echo "MaxAuthTries 2" >> /etc/openssh/sshd_config
 [root@br-srv ~]# echo "Banner /etc/openssh/banner" >> /etc/openssh/sshd_config
@@ -614,11 +616,6 @@ br-rtr#write memory</code></pre>
 
 [root@br-srv ~]# systemctl restart sshd
 [root@br-srv ~]# ssh -p 2026 sshuser@localhost</code></pre>
-
-      <div class="callout info">
-        <span class="icon">💡</span>
-        <div><strong>Правка</strong>В исходнике этот раздел был озаглавлен <code>BR-RTR</code>, хотя команды относятся к <strong>BR-SRV</strong> — здесь поправлено.</div>
-      </div>
     </section>
 
     <!-- 8. GRE -->
@@ -636,21 +633,27 @@ br-rtr#write memory</code></pre>
       </div>
 
       <h3>HQ-RTR</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">cisco</span></div><code class="language-plaintext">hq-rtr(config)#interface tunnel.0
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">cisco</span></div><code class="language-plaintext">hq-rtr#configure terminal
+
+hq-rtr(config)#interface tunnel.0
 hq-rtr(config-if-tunnel)#description "GRE"
 hq-rtr(config-if-tunnel)#ip address 10.10.10.1/30
 hq-rtr(config-if-tunnel)#ip tunnel 172.16.1.2 172.16.2.2 mode gre
 hq-rtr(config-if-tunnel)#exit
+
 hq-rtr(config)#write memory
 hq-rtr(config)#exit
 hq-rtr#show interface tunnel.0</code></pre>
 
       <h3>BR-RTR</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">cisco</span></div><code class="language-plaintext">br-rtr(config)#interface tunnel.0
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">cisco</span></div><code class="language-plaintext">br-rtr#configure terminal
+
+br-rtr(config)#interface tunnel.0
 br-rtr(config-if-tunnel)#description "GRE"
 br-rtr(config-if-tunnel)#ip address 10.10.10.2/30
 br-rtr(config-if-tunnel)#ip tunnel 172.16.2.2 172.16.1.2 mode gre
 br-rtr(config-if-tunnel)#exit
+
 br-rtr(config)#write memory
 br-rtr(config)#exit
 br-rtr#show interface tunnel.0</code></pre>
@@ -673,7 +676,9 @@ br-rtr#show interface tunnel.0</code></pre>
       </div>
 
       <h3>HQ-RTR</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">cisco</span></div><code class="language-plaintext">hq-rtr(config)#router ospf 1
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">cisco</span></div><code class="language-plaintext">hq-rtr#configure terminal
+
+hq-rtr(config)#router ospf 1
 hq-rtr(config-router)#ospf router-id 10.10.10.1
 hq-rtr(config-router)#passive-interface default
 hq-rtr(config-router)#no passive-interface tunnel.0
@@ -697,7 +702,9 @@ hq-rtr#show ip ospf interface brief
 hq-rtr#show ip ospf neighbor</code></pre>
 
       <h3>BR-RTR</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">cisco</span></div><code class="language-plaintext">br-rtr(config)#router ospf 1
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">cisco</span></div><code class="language-plaintext">br-rtr#configure terminal
+
+br-rtr(config)#router ospf 1
 br-rtr(config-router)#ospf router-id 10.10.10.2
 br-rtr(config-router)#passive-interface default
 br-rtr(config-router)#no passive-interface tunnel.0
@@ -715,7 +722,7 @@ br-rtr(config)#write memory
 br-rtr(config)#exit
 
 br-rtr#show ip ospf interface brief
-br-rtr#show ip ospf neighbor/code></pre>
+br-rtr#show ip ospf neighbor</pre>
     </section>
 
     <!-- 10. NAT -->
@@ -723,7 +730,9 @@ br-rtr#show ip ospf neighbor/code></pre>
       <h2><span class="num">10</span>🌐 NAT на пограничных маршрутизаторах</h2>
 
       <h3>HQ-RTR</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">cisco</span></div><code class="language-plaintext">hq-rtr(config)#interface isp
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">cisco</span></div><code class="language-plaintext">hq-rtr#configure terminal
+
+hq-rtr(config)#interface isp
 hq-rtr(config-if)#ip nat outside
 hq-rtr(config-if)#exit
 
@@ -739,19 +748,21 @@ hq-rtr(config)#interface vl999
 hq-rtr(config-if)#ip nat inside
 hq-rtr(config-if)#exit
 
-hq-rtr(config)#ip nat pool v100 192.168.100.1-192.168.100.30
-hq-rtr(config)#ip nat pool v200 192.168.200.1-192.168.200.254
-hq-rtr(config)#ip nat pool v999 192.168.99.1-192.168.99.6
+hq-rtr(config)#ip nat pool vl100 192.168.100.1-192.168.100.30
+hq-rtr(config)#ip nat pool vl200 192.168.200.1-192.168.200.254
+hq-rtr(config)#ip nat pool vl999 192.168.99.1-192.168.99.6
 
-hq-rtr(config)#ip nat source dynamic inside-to-outside pool v100 overload interface isp
-hq-rtr(config)#ip nat source dynamic inside-to-outside pool v200 overload interface isp
-hq-rtr(config)#ip nat source dynamic inside-to-outside pool v999 overload interface isp
+hq-rtr(config)#ip nat source dynamic inside-to-outside pool vl100 overload interface isp
+hq-rtr(config)#ip nat source dynamic inside-to-outside pool vl200 overload interface isp
+hq-rtr(config)#ip nat source dynamic inside-to-outside pool vl999 overload interface isp
 
 hq-rtr(config)#exit
 hq-rtr#write memory</code></pre>
 
       <h3>BR-RTR</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">cisco</span></div><code class="language-plaintext">br-rtr(config)#interface isp
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">cisco</span></div><code class="language-plaintext">br-rtr#configure terminal
+
+br-rtr(config)#interface isp
 br-rtr(config-if)#ip nat outside
 br-rtr(config-if)#exit
 
@@ -823,15 +834,13 @@ hq-rtr(config)#write memory</code></pre>
       <h3>Проверка</h3>
 
       <p>На <strong>HQ-CLI</strong> — что адрес и шлюз пришли по DHCP, DNS-суффикс — <code>au-team.irpo</code>:</p>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[stud@hq-cli ~]$ ip -c a show ens19          # 192.168.200.X/24
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[stud@hq-cli ~]$ ip -c a          # 192.168.200.X/24
 [stud@hq-cli ~]$ ip route                    # default via 192.168.200.1
 [stud@hq-cli ~]$ cat /etc/resolv.conf        # search au-team.irpo / nameserver 192.168.100.2
 [stud@hq-cli ~]$ ping -c3 192.168.200.1      # шлюз</code></pre>
 
       <p>На <strong>HQ-RTR</strong> — что клиент действительно получил адрес из пула:</p>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">cisco</span></div><code class="language-plaintext">hq-rtr#show dhcp-server 1
-hq-rtr#show dhcp-server 1 binding
-hq-rtr#show dhcp-server 1 pool</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">cisco</span></div><code class="language-plaintext">hq-rtr#show dhcp-server 1</code></pre>
 
       <div class="callout note">
         <span class="icon">💡</span>
