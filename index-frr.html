@@ -696,11 +696,11 @@ EOF
 
       <h4>Uplink (ens18) и LAN (ens19)</h4>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash"># Uplink
-[root@br-rtr ~]# echo "172.16.2.2/28" > /etc/net/ifaces/ens18/ipv4address
-[root@br-rtr ~]# echo "default via 172.16.2.1" > /etc/net/ifaces/ens18/ipv4route
+[root@br-rtr ~]# echo "172.16.2.2/28" > /etc/net/ifaces/enp6s20/ipv4address
+[root@br-rtr ~]# echo "default via 172.16.2.1" > /etc/net/ifaces/enp6s20/ipv4route
 
 # LAN
-[root@br-rtr ~]# echo "192.168.0.1/28" > /etc/net/ifaces/ens19/ipv4address
+[root@br-rtr ~]# echo "192.168.0.1/28" > /etc/net/ifaces/enp6s21/ipv4address
 
 [root@br-rtr ~]# systemctl restart network
 [root@br-rtr ~]# ip -c a</code></pre>
