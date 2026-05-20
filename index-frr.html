@@ -639,14 +639,14 @@
 [root@hq-rtr ~]# sysctl net.ipv4.ip_forward    # должно быть = 1</code></pre>
 
       <h4>Uplink-интерфейс (ens18 — сторона ISP)</h4>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# echo "172.16.1.2/28" > /etc/net/ifaces/ens18/ipv4address
-[root@hq-rtr ~]# echo "default via 172.16.1.1" > /etc/net/ifaces/ens18/ipv4route</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# echo "172.16.1.2/28" > /etc/net/ifaces/enp6s20/ipv4address
+[root@hq-rtr ~]# echo "default via 172.16.1.1" > /etc/net/ifaces/enp6s20/ipv4route</code></pre>
 
       <h4>VLAN-сабинтерфейсы на ens19 (LAN-транк)</h4>
       <div class="callout info">
         <span class="icon">💡</span>
         <div><strong>VLAN в ALT Linux</strong>
-          Для каждого VLAN создаётся папка <code>/etc/net/ifaces/ens19.&lt;vid&gt;/</code> с файлом <code>options</code> (тип <code>vlan</code>) и <code>ipv4address</code>. Модуль ядра <code>8021q</code> подгружается автоматически.
+          Для каждого VLAN создаётся папка <code>/etc/net/ifaces/enp6s21.&lt;vid&gt;/</code> с файлом <code>options</code> (тип <code>vlan</code>) и <code>ipv4address</code>. Модуль ядра <code>8021q</code> подгружается автоматически.
         </div>
       </div>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash"># VLAN 100 — HQ-SRV
