@@ -638,9 +638,10 @@
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# systemctl restart network
 [root@hq-rtr ~]# sysctl net.ipv4.ip_forward    # должно быть = 1</code></pre>
 
-      <h4>Uplink-интерфейс (ens18 — сторона ISP)</h4>
+      <h4>Uplink-интерфейс (enp6s20 — сторона ISP)</h4>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# echo "172.16.1.2/28" > /etc/net/ifaces/enp6s20/ipv4address
-[root@hq-rtr ~]# echo "default via 172.16.1.1" > /etc/net/ifaces/enp6s20/ipv4route</code></pre>
+[root@hq-rtr ~]# echo "default via 172.16.1.1" > /etc/net/ifaces/enp6s20/ipv4route
+[root@hq-rtr ~]# systemctl restart network</code></pre>
 
       <h4>VLAN-сабинтерфейсы на ens19 (LAN-транк)</h4>
       <div class="callout info">
