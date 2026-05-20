@@ -637,8 +637,11 @@ br-rtr#write memory</code></pre>
 
 hq-rtr(config)#interface tunnel.0
 hq-rtr(config-if-tunnel)#description "GRE"
+hq-rtr(config-if-tunnel)#write memory
 hq-rtr(config-if-tunnel)#ip address 10.10.10.1/30
+hq-rtr(config-if-tunnel)#write memory
 hq-rtr(config-if-tunnel)#ip tunnel 172.16.1.2 172.16.2.2 mode gre
+hq-rtr(config-if-tunnel)#write memory
 hq-rtr(config-if-tunnel)#exit
 
 hq-rtr(config)#write memory
@@ -650,8 +653,11 @@ hq-rtr#show interface tunnel.0</code></pre>
 
 br-rtr(config)#interface tunnel.0
 br-rtr(config-if-tunnel)#description "GRE"
+br-rtr(config-if-tunnel)#write memory
 br-rtr(config-if-tunnel)#ip address 10.10.10.2/30
+br-rtr(config-if-tunnel)#write memory
 br-rtr(config-if-tunnel)#ip tunnel 172.16.2.2 172.16.1.2 mode gre
+br-rtr(config-if-tunnel)#write memory
 br-rtr(config-if-tunnel)#exit
 
 br-rtr(config)#write memory
@@ -680,17 +686,25 @@ br-rtr#show interface tunnel.0</code></pre>
 
 hq-rtr(config)#router ospf 1
 hq-rtr(config-router)#ospf router-id 10.10.10.1
+hq-rtr(config-router)#write memory
 hq-rtr(config-router)#passive-interface default
+hq-rtr(config-router)#write memory
 hq-rtr(config-router)#no passive-interface tunnel.0
+hq-rtr(config-router)#write memory
 
 hq-rtr(config-router)#network 10.10.10.0/30    area 0
+hq-rtr(config-router)#write memory
 hq-rtr(config-router)#network 192.168.100.0/27 area 0
+hq-rtr(config-router)#write memory
 hq-rtr(config-router)#network 192.168.200.0/24 area 0
+hq-rtr(config-router)#write memory
 hq-rtr(config-router)#network 192.168.99.0/29  area 0
+hq-rtr(config-router)#write memory
 hq-rtr(config-router)#exit
 
 hq-rtr(config)#interface tunnel.0
 hq-rtr(config-if-tunnel)#ip ospf authentication message-digest
+hq-rtr(config-if-tunnel)#write memory
 hq-rtr(config-if-tunnel)#ip ospf message-digest-key 1 md5 P@ssw0rd
 hq-rtr(config-if-tunnel)#write memory
 hq-rtr(config-if-tunnel)#exit
@@ -706,14 +720,20 @@ hq-rtr#show ip ospf neighbor</code></pre>
 
 br-rtr(config)#router ospf 1
 br-rtr(config-router)#ospf router-id 10.10.10.2
+br-rtr(config-router)#write memory
 br-rtr(config-router)#passive-interface default
+br-rtr(config-router)#write memory
 br-rtr(config-router)#no passive-interface tunnel.0
+br-rtr(config-router)#write memory
 br-rtr(config-router)#network 192.168.0.0/28 area 0
+br-rtr(config-router)#write memory
 br-rtr(config-router)#network 10.10.10.0/30  area 0
+br-rtr(config-router)#write memory
 br-rtr(config-router)#exit
 
 br-rtr(config)#interface tunnel.0
 br-rtr(config-if-tunnel)#ip ospf authentication message-digest
+br-rtr(config-if-tunnel)#write memory
 br-rtr(config-if-tunnel)#ip ospf message-digest-key 1 md5 P@ssw0rd
 br-rtr(config-if-tunnel)#write memory
 br-rtr(config-if-tunnel)#exit
@@ -734,27 +754,37 @@ br-rtr#show ip ospf neighbor</pre>
 
 hq-rtr(config)#interface isp
 hq-rtr(config-if)#ip nat outside
+hq-rtr(config-if)#write memory
 hq-rtr(config-if)#exit
 
 hq-rtr(config)#interface vl100
 hq-rtr(config-if)#ip nat inside
+hq-rtr(config-if)#write memory
 hq-rtr(config-if)#exit
 
 hq-rtr(config)#interface vl200
 hq-rtr(config-if)#ip nat inside
+hq-rtr(config-if)#write memory
 hq-rtr(config-if)#exit
 
 hq-rtr(config)#interface vl999
 hq-rtr(config-if)#ip nat inside
+hq-rtr(config-if)#write memory
 hq-rtr(config-if)#exit
 
 hq-rtr(config)#ip nat pool vl100 192.168.100.1-192.168.100.30
+hq-rtr(config)#write memory
 hq-rtr(config)#ip nat pool vl200 192.168.200.1-192.168.200.254
+hq-rtr(config)#write memory
 hq-rtr(config)#ip nat pool vl999 192.168.99.1-192.168.99.6
+hq-rtr(config)#write memory
 
 hq-rtr(config)#ip nat source dynamic inside-to-outside pool vl100 overload interface isp
+hq-rtr(config)#write memory
 hq-rtr(config)#ip nat source dynamic inside-to-outside pool vl200 overload interface isp
+hq-rtr(config)#write memory
 hq-rtr(config)#ip nat source dynamic inside-to-outside pool vl999 overload interface isp
+hq-rtr(config)#write memory
 
 hq-rtr(config)#exit
 hq-rtr#write memory</code></pre>
@@ -764,14 +794,18 @@ hq-rtr#write memory</code></pre>
 
 br-rtr(config)#interface isp
 br-rtr(config-if)#ip nat outside
+br-rtr(config-if)#write memory
 br-rtr(config-if)#exit
 
 br-rtr(config)#interface int1
 br-rtr(config-if)#ip nat inside
+br-rtr(config-if)#write memory
 br-rtr(config-if)#exit
 
 br-rtr(config)#ip nat pool br-net 192.168.0.1-192.168.0.14
+br-rtr(config)#write memory
 br-rtr(config)#ip nat source dynamic inside-to-outside pool br-net overload interface isp
+br-rtr(config)#write memory
 
 br-rtr(config)#exit
 br-rtr#write memory</code></pre>
@@ -808,9 +842,13 @@ hq-rtr(config)#ip pool VLAN200 192.168.200.2-192.168.200.254</code></pre>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">cisco</span></div><code class="language-plaintext">hq-rtr(config)#dhcp-server 1
 hq-rtr(config-dhcp-server)#pool VLAN200 1
 hq-rtr(config-dhcp-server-pool)#mask 24
+hq-rtr(config-dhcp-server-pool)#write memory
 hq-rtr(config-dhcp-server-pool)#gateway 192.168.200.1
+hq-rtr(config-dhcp-server-pool)#write memory
 hq-rtr(config-dhcp-server-pool)#dns 192.168.100.2
+hq-rtr(config-dhcp-server-pool)#write memory
 hq-rtr(config-dhcp-server-pool)#domain-name au-team.irpo
+hq-rtr(config-dhcp-server-pool)#write memory
 hq-rtr(config-dhcp-server-pool)#exit
 hq-rtr(config-dhcp-server)#exit</code></pre>
 
