@@ -659,6 +659,7 @@ hq-rtr(config)# router ospf
 hq-rtr(config-router)# passive-interface default
 hq-rtr(config-router)# no passive-interface tunnel0
 
+hq-rtr(config-router)# network 172.16.1.0/28 area 0
 hq-rtr(config-router)# network 192.168.100.0/27 area 0
 hq-rtr(config-router)# network 192.168.200.0/24 area 0
 hq-rtr(config-router)# network 192.168.99.0/29  area 0
@@ -677,7 +678,9 @@ br-rtr(config)# router ospf
 br-rtr(config-router)# passive-interface default
 br-rtr(config-router)# no passive-interface tunnel0
 
+br-rtr(config-router)# network 172.16.2.0/28 area 0
 br-rtr(config-router)# network 192.168.0.0/28 area 0
+
 br-rtr(config-router)# exit
 
 br-rtr(config)# end
