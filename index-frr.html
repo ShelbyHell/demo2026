@@ -46,12 +46,12 @@
       <li><a href="#basic">Базовая настройка</a></li>
       <li><a href="#isp">ISP: IP, NAT, форвардинг</a></li>
       <li><a href="#uplinks">HQ-RTR / BR-RTR → интернет</a></li>
+      <li><a href="#nat">NAT на роутерах (iptables)</a></li>
       <li><a href="#frr-install">Установка FRR</a></li>
       <li><a href="#users">Пользователи</a></li>
       <li><a href="#ssh">SSH на серверах</a></li>
       <li><a href="#gre">GRE-туннель</a></li>
       <li><a href="#ospf">OSPF (FRR vtysh)</a></li>
-      <li><a href="#nat">NAT на роутерах (iptables)</a></li>
       <li><a href="#dhcp">DHCP на VLAN 200</a></li>
       <li><a href="#dns">DNS-сервер (BIND) на HQ-SRV</a></li>
       <li><a href="#tz">Часовой пояс</a></li>
@@ -92,7 +92,7 @@
     <!-- 00. Intro -->
     <section id="intro">
       <h2><span class="num">00</span>📘 Как пользоваться этой методичкой</h2>
-      <p>Это адаптация стандартного руководства под <strong>FRR (Free Range Routing)</strong> вместо EcoRouter. HQ-RTR и BR-RTR теперь — обычные Linux-серверы (ALT Linux) с пакетом <code>frr</code>. Вся конфигурация роутинга делается через <code>vtysh</code>, сетевые интерфейсы — через стандартные ALT-механизмы <code>/etc/net/ifaces/</code>.</p>
+      <p>Это руководство по настройке сети с использованием <strong>FRR (Free Range Routing)</strong>. HQ-RTR и BR-RTR — обычные Linux-серверы (ALT Linux) с пакетом <code>frr</code>. Вся конфигурация роутинга делается через <code>vtysh</code>, сетевые интерфейсы настраиваются через стандартные ALT-механизмы <code>/etc/net/ifaces/</code>.</p>
 
       <div class="callout success">
         <span class="icon">🦓</span>
@@ -416,6 +416,37 @@ HOST=enp6s21</code></pre>
 [root@br-rtr ~]# ip route</code></pre>
     </section>
 
+    <!-- 11. NAT -->
+    <section id="nat">
+      <h2><span class="num">11</span>🌐 NAT на роутерах (iptables)</h2>
+
+      <div class="callout success">
+        <span class="icon">🦓</span>
+        <div><strong>Вместо EcoRouter NAT</strong> — стандартный Linux <code>iptables MASQUERADE</code> на внешнем интерфейсе. Правила сохраняются в <code>/etc/sysconfig/iptables</code> и восстанавливаются сервисом <code>iptables</code>.</div>
+      </div>
+
+      <h3>HQ-RTR</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash"># MASQUERADE для всех внутренних подсетей через uplink enp6s20
+[root@hq-rtr ~]# iptables -t nat -A POSTROUTING -s 192.168.100.0/27 -o enp6s20 -j MASQUERADE
+[root@hq-rtr ~]# iptables -t nat -A POSTROUTING -s 192.168.200.0/24 -o enp6s20 -j MASQUERADE
+[root@hq-rtr ~]# iptables -t nat -A POSTROUTING -s 192.168.99.0/29  -o enp6s20 -j MASQUERADE
+
+# Туннельный трафик NAT-ить не нужно — он уже инкапсулирован
+# Сохранить и активировать при загрузке
+[root@hq-rtr ~]# iptables-save >> /etc/sysconfig/iptables
+[root@hq-rtr ~]# systemctl enable --now iptables
+
+[root@hq-rtr ~]# iptables -t nat -L -n -v    # проверка</code></pre>
+
+      <h3>BR-RTR</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-rtr ~]# iptables -t nat -A POSTROUTING -s 192.168.0.0/28 -o enp6s20 -j MASQUERADE
+
+[root@br-rtr ~]# iptables-save >> /etc/sysconfig/iptables
+[root@br-rtr ~]# systemctl enable --now iptables
+
+[root@br-rtr ~]# iptables -t nat -L -n -v</code></pre>
+    </section>
+
     <!-- 06. FRR Install -->
     <section id="frr-install">
       <h2><span class="num">06</span>🦓 Установка и настройка FRR</h2>
@@ -673,37 +704,6 @@ O>* 192.168.0.0/28 [110/20] via 10.10.10.2, tunnel0</code></pre>
       </div>
     </section>
 
-    <!-- 11. NAT -->
-    <section id="nat">
-      <h2><span class="num">11</span>🌐 NAT на роутерах (iptables)</h2>
-
-      <div class="callout success">
-        <span class="icon">🦓</span>
-        <div><strong>Вместо EcoRouter NAT</strong> — стандартный Linux <code>iptables MASQUERADE</code> на внешнем интерфейсе. Правила сохраняются в <code>/etc/sysconfig/iptables</code> и восстанавливаются сервисом <code>iptables</code>.</div>
-      </div>
-
-      <h3>HQ-RTR</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash"># MASQUERADE для всех внутренних подсетей через uplink enp6s20
-[root@hq-rtr ~]# iptables -t nat -A POSTROUTING -s 192.168.100.0/27 -o enp6s20 -j MASQUERADE
-[root@hq-rtr ~]# iptables -t nat -A POSTROUTING -s 192.168.200.0/24 -o enp6s20 -j MASQUERADE
-[root@hq-rtr ~]# iptables -t nat -A POSTROUTING -s 192.168.99.0/29  -o enp6s20 -j MASQUERADE
-
-# Туннельный трафик NAT-ить не нужно — он уже инкапсулирован
-# Сохранить и активировать при загрузке
-[root@hq-rtr ~]# iptables-save >> /etc/sysconfig/iptables
-[root@hq-rtr ~]# systemctl enable --now iptables
-
-[root@hq-rtr ~]# iptables -t nat -L -n -v    # проверка</code></pre>
-
-      <h3>BR-RTR</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-rtr ~]# iptables -t nat -A POSTROUTING -s 192.168.0.0/28 -o enp6s20 -j MASQUERADE
-
-[root@br-rtr ~]# iptables-save >> /etc/sysconfig/iptables
-[root@br-rtr ~]# systemctl enable --now iptables
-
-[root@br-rtr ~]# iptables -t nat -L -n -v</code></pre>
-    </section>
-
     <!-- 12. DHCP -->
     <section id="dhcp">
       <h2><span class="num">12</span>📡 DHCP на VLAN 200 (ISC DHCP)</h2>
@@ -758,8 +758,6 @@ subnet 192.168.200.0 netmask 255.255.255.0 {
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# nano /etc/sysconfig/dhcpd</code></pre>
 <p>Найти строку <code>DHCPDARGS</code> и заменить:</p>
 <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">diff</span></div><code class="language-diff">- DHCPDARGS=
-+ DHCPDARGS="enp6s21.200"</code></pre>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">diff</span></div><code class="language-diff">- DHCPDARGS=
 + DHCPDARGS="enp6s21.200"</code></pre>
 
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# systemctl enable --now dhcpd
