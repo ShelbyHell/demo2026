@@ -274,8 +274,7 @@
           Для каждого VLAN создаётся папка <code>/etc/net/ifaces/enp6s21.&lt;vid&gt;/</code> с файлом <code>options</code> (тип <code>vlan</code>) и <code>ipv4address</code>. Модуль ядра <code>8021q</code> подгружается автоматически.
         </div>
       </div>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash"># VLAN 100 — HQ-SRV
-[root@hq-rtr ~]# mkdir -p /etc/net/ifaces/enp6s21.100
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# mkdir -p /etc/net/ifaces/enp6s21.100
 [root@hq-rtr ~]# nano /etc/net/ifaces/enp6s21.100/options</code></pre>
 Прописываем содержимое ниже в файл:
 <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang"></span></div><code class="language-plaintext">TYPE=vlan
@@ -286,8 +285,7 @@ HOST=enp6s21</code></pre>
 <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang"></span></div><code class="language-plaintext">[root@hq-rtr ~]# echo "192.168.100.1/27" > /etc/net/ifaces/enp6s21.100/ipv4address</code></pre>
 
 
-<pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang"></span></div><code class="language-plaintext"># VLAN 200 — HQ-CLI (DHCP-клиенты)
-[root@hq-rtr ~]# mkdir -p /etc/net/ifaces/enp6s21.200
+<pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang"></span></div><code class="language-plaintext">[root@hq-rtr ~]# mkdir -p /etc/net/ifaces/enp6s21.200
 [root@hq-rtr ~]# nano /etc/net/ifaces/enp6s21.200/options</code></pre>
 Прописываем содержимое ниже в файл:
 <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang"></span></div><code class="language-plaintext">TYPE=vlan
@@ -298,8 +296,7 @@ HOST=enp6s21</code></pre>
 <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang"></span></div><code class="language-plaintext">[root@hq-rtr ~]# echo "192.168.200.1/24" > /etc/net/ifaces/enp6s21.200/ipv4address</code></pre>
 
 
-<pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang"></span></div><code class="language-plaintext"># VLAN 999 — management
-[root@hq-rtr ~]# mkdir -p /etc/net/ifaces/enp6s21.999
+<pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang"></span></div><code class="language-plaintext">[root@hq-rtr ~]# mkdir -p /etc/net/ifaces/enp6s21.999
 [root@hq-rtr ~]# nano /etc/net/ifaces/enp6s21.999/options</code></pre>
 Прописываем содержимое ниже в файл:
 <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang"></span></div><code class="language-plaintext">TYPE=vlan
