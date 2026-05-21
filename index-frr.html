@@ -759,10 +759,7 @@ subnet 192.168.200.0 netmask 255.255.255.0 {
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash"># На HQ-CLI
 [stud@hq-cli ~]$ ip -c a                  # 192.168.200.x/24
 [stud@hq-cli ~]$ ip route                 # default via 192.168.200.1
-[stud@hq-cli ~]$ cat /etc/resolv.conf     # nameserver 192.168.100.2
-
-# На HQ-RTR — просмотр выданных аренд
-[root@hq-rtr ~]# cat /var/lib/dhcpd/dhcpd.leases</code></pre>
+[stud@hq-cli ~]$ cat /etc/resolv.conf     # nameserver 192.168.100.2</code></pre>
     </section>
 
     <!-- 13. DNS -->
