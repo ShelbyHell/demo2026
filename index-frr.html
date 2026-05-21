@@ -467,13 +467,10 @@ HOST=enp6s21</code></pre>
       <h3>Установка пакета</h3>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# apt-get update && apt-get install -y frr frr-pythontools</code></pre>
 
-      <h3>Включить демоны ospfd и zebra</h3>
+      <h3>Включить демоны ospfd</h3>
       <p>В файле <code>/etc/frr/daemons</code> включить нужные демоны:</p>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# nano /etc/frr/daemons</code></pre>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">diff</span></div><code class="language-diff">- zebra=no
-+ zebra=yes
-
-- ospfd=no
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">diff</span></div><code class="language-diff">- ospfd=no
 + ospfd=yes</code></pre>
 
       <h3>Запуск FRR</h3>
