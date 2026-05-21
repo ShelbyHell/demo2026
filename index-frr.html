@@ -602,7 +602,7 @@ BOOTPROTO=static</code></pre>
       <h3>BR-RTR — создание GRE</h3>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-rtr ~]# mkdir -p /etc/net/ifaces/tunnel0
 [root@br-rtr ~]# nano /etc/net/ifaces/tunnel0/options</code></pre>
-
+Вносим в файл следующее содержимое:
 <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang"></span></div><code class="language-plaintext">TYPE=iptun
 TUNTYPE=gre
 TUNLOCAL=172.16.2.2
