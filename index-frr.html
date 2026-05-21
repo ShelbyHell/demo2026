@@ -762,33 +762,37 @@ subnet 192.168.200.0 netmask 255.255.255.0 {
 [stud@hq-cli ~]$ cat /etc/resolv.conf     # nameserver 192.168.100.2</code></pre>
     </section>
 
-    <!-- 13. DNS -->
+    <!-- 12. DNS / BIND -->
     <section id="dns">
-      <h2><span class="num">13</span>🌐 DNS-сервер (BIND) на HQ-SRV</h2>
+      <h2><span class="num">12</span>🌐 DNS-сервер (BIND) на HQ-SRV</h2>
 
-      <p>Этот раздел <strong>не изменился</strong> — BIND ставится на HQ-SRV, который работает на ALT Linux и не зависит от типа роутеров.</p>
+      <p>Основной DNS-сервер реализован на <strong>HQ-SRV</strong>. Сервер отвечает за прямое (A) и обратное (PTR) разрешение имён в зоне <code>au-team.irpo</code>. В качестве форвардера используется публичный DNS <code>95.167.167.95</code> (подойдёт любой общедоступный — например <code>77.88.8.7</code>, <code>77.88.8.3</code>).</p>
 
       <h3>Таблица записей</h3>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Устройство</th><th>FQDN</th><th>Тип</th><th>Адрес</th></tr></thead>
           <tbody>
-            <tr><td>HQ-RTR</td><td><code>hq-rtr.au-team.irpo</code></td><td>A, PTR</td><td><code>192.168.100.1</code> · <code>192.168.200.1</code> · <code>192.168.99.1</code></td></tr>
-            <tr><td>BR-RTR</td><td><code>br-rtr.au-team.irpo</code></td><td>A</td><td><code>192.168.0.1</code></td></tr>
-            <tr><td>HQ-SRV</td><td><code>hq-srv.au-team.irpo</code></td><td>A, PTR</td><td><code>192.168.100.2</code></td></tr>
-            <tr><td>HQ-CLI</td><td><code>hq-cli.au-team.irpo</code></td><td>A, PTR</td><td><code>192.168.200.2</code></td></tr>
-            <tr><td>BR-SRV</td><td><code>br-srv.au-team.irpo</code></td><td>A</td><td><code>192.168.0.2</code></td></tr>
-            <tr><td>docker</td><td><code>docker.au-team.irpo</code></td><td>A</td><td><code>172.16.1.1</code></td></tr>
-            <tr><td>web</td><td><code>web.au-team.irpo</code></td><td>A</td><td><code>172.16.2.1</code></td></tr>
+            <tr><td>HQ-RTR</td><td><code>hq-rtr.au-team.irpo</code></td><td><code>A</code>, <code>PTR</code></td><td><code>192.168.100.1</code> · <code>192.168.200.1</code> · <code>192.168.99.1</code></td></tr>
+            <tr><td>BR-RTR</td><td><code>br-rtr.au-team.irpo</code></td><td><code>A</code></td><td><code>192.168.0.1</code></td></tr>
+            <tr><td>HQ-SRV</td><td><code>hq-srv.au-team.irpo</code></td><td><code>A</code>, <code>PTR</code></td><td><code>192.168.100.2</code></td></tr>
+            <tr><td>HQ-CLI</td><td><code>hq-cli.au-team.irpo</code></td><td><code>A</code>, <code>PTR</code></td><td><code>192.168.200.2</code></td></tr>
+            <tr><td>BR-SRV</td><td><code>br-srv.au-team.irpo</code></td><td><code>A</code></td><td><code>192.168.0.2</code></td></tr>
+            <tr><td>ISP → HQ-RTR</td><td><code>docker.au-team.irpo</code></td><td><code>A</code></td><td><code>172.16.1.1</code></td></tr>
+            <tr><td>ISP → BR-RTR</td><td><code>web.au-team.irpo</code></td><td><code>A</code></td><td><code>172.16.2.1</code></td></tr>
           </tbody>
         </table>
       </div>
 
-      <h3>Установка BIND</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# apt-get update && apt-get install -y bind bind-utils</code></pre>
+      <h3>1. Установка BIND</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# apt-get update && apt-get install bind bind-utils -y</code></pre>
 
-      <h3>options.conf</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# nano /var/lib/bind/etc/options.conf</code></pre>
+      <h3>2. <code>options.conf</code> — слушающий адрес, форвардер, доступ</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# nano /var/lib/bind/etc/options.conf</code></pre>
+      <div class="kbd-strip"><span class="label">nano:</span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">O</kbd>, <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">X</kbd> <span class="desc">— выйти</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">W</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">K</kbd> / <kbd class="k">Ctrl</kbd>+<kbd class="k">U</kbd> <span class="desc">— вырезать / вставить строку</span></span><span class="item"><kbd class="k">Alt</kbd>+<kbd class="k">U</kbd> <span class="desc">— отменить</span></span></div>
+
+      <p>В файле меняем 3 строки. Поиск по строке — <kbd>Ctrl</kbd>+<kbd>W</kbd>, ввести искомое (например <code>listen-on</code>), <kbd>Enter</kbd>.</p>
+
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">diff</span></div><code class="language-diff">- listen-on    { 127.0.0.1; };
 + listen-on    { 192.168.100.2; };
 
@@ -798,10 +802,44 @@ subnet 192.168.200.0 netmask 255.255.255.0 {
 - allow-query  { localhost; };
 + allow-query  { any; };</code></pre>
 
-      <h3>rfc1912.conf — добавить зоны</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# nano /var/lib/bind/etc/rfc1912.conf</code></pre>
-      <p>Добавить в конец:</p>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">zone "au-team.irpo" {
+      <p>Остальные строки в <code>options.conf</code> не трогаем. Итоговый рабочий блок выглядит так:</p>
+
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bind</span></div><code class="language-plaintext">options {
+    version "unknown";
+    directory "/etc/bind/zone";
+    dump-file       "/var/run/named/named_dump.db";
+    statistics-file "/var/run/named/named.stats";
+    recursing-file  "/var/run/named/named.recursing";
+    secroots-file   "/var/run/named/named.secroots";
+
+    // disables the use of a PID file
+    pid-file none;
+
+    listen-on    { 192.168.100.2; };
+    listen-on-v6 { ::1; };
+
+    // forward only;
+    forwarders   { 95.167.167.95; };
+
+    allow-query  { any; };
+};</code></pre>
+
+      <div class="callout info">
+        <span class="icon">💡</span>
+        <div><strong>Что делает каждая директива</strong>
+          <ul style="margin:6px 0 0 16px; padding:0;">
+            <li><code>listen-on</code> — адрес и порт, на которых BIND принимает запросы.</li>
+            <li><code>forwarders</code> — куда пересылать запросы по зонам, за которые сервер не отвечает.</li>
+            <li><code>allow-query</code> — кому разрешено задавать обычные запросы (здесь — всем).</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>3. <code>rfc1912.conf</code> — описание зон</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# nano /var/lib/bind/etc/rfc1912.conf</code></pre>
+      <div class="kbd-strip"><span class="label">nano:</span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">O</kbd>, <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">X</kbd> <span class="desc">— выйти</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">W</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">K</kbd> / <kbd class="k">Ctrl</kbd>+<kbd class="k">U</kbd> <span class="desc">— вырезать / вставить строку</span></span><span class="item"><kbd class="k">Alt</kbd>+<kbd class="k">U</kbd> <span class="desc">— отменить</span></span></div>
+      <p>В конец файла добавить:</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bind</span></div><code class="language-plaintext">zone "au-team.irpo" {
     type master;
     file "au-team.irpo";
 };
@@ -816,14 +854,15 @@ zone "200.168.192.in-addr.arpa" {
     file "200.168.192.in-addr.arpa";
 };</code></pre>
 
-      <h3>Создание файлов зон</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# cp /var/lib/bind/etc/zone/empty /var/lib/bind/etc/zone/au-team.irpo
+      <h3>4. Создание файлов зон из шаблона</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# cp /var/lib/bind/etc/zone/empty /var/lib/bind/etc/zone/au-team.irpo
 [root@hq-srv ~]# cp /var/lib/bind/etc/zone/empty /var/lib/bind/etc/zone/100.168.192.in-addr.arpa
 [root@hq-srv ~]# cp /var/lib/bind/etc/zone/empty /var/lib/bind/etc/zone/200.168.192.in-addr.arpa</code></pre>
 
-      <h3>Прямая зона au-team.irpo</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# nano /var/lib/bind/etc/zone/au-team.irpo</code></pre>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">$TTL    1D
+      <h3>5. Прямая зона <code>au-team.irpo</code></h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# nano /var/lib/bind/etc/zone/au-team.irpo</code></pre>
+      <div class="kbd-strip"><span class="label">nano:</span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">O</kbd>, <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">X</kbd> <span class="desc">— выйти</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">W</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">K</kbd> / <kbd class="k">Ctrl</kbd>+<kbd class="k">U</kbd> <span class="desc">— вырезать / вставить строку</span></span><span class="item"><kbd class="k">Alt</kbd>+<kbd class="k">U</kbd> <span class="desc">— отменить</span></span></div>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bind-zone</span></div><code class="language-plaintext">$TTL    1D
 @       IN  SOA     au-team.irpo. root.au-team.irpo. (
                                 2025062300  ; serial
                                 12H         ; refresh
@@ -843,30 +882,138 @@ web     IN  A       172.16.2.1
 br-srv  IN  A       192.168.0.2
 br-rtr  IN  A       192.168.0.1</code></pre>
 
-      <h3>Обратные зоны</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# nano /var/lib/bind/etc/zone/100.168.192.in-addr.arpa</code></pre>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">$TTL    1D
-@   IN  SOA au-team.irpo. root.au-team.irpo. (2025062300 12H 1H 1W 1H)
-    IN  NS  au-team.irpo.
-1   IN  PTR hq-rtr.au-team.irpo.
-2   IN  PTR hq-srv.au-team.irpo.</code></pre>
+      <h3>6. Обратная зона <code>100.168.192.in-addr.arpa</code></h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# nano /var/lib/bind/etc/zone/100.168.192.in-addr.arpa</code></pre>
+      <div class="kbd-strip"><span class="label">nano:</span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">O</kbd>, <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">X</kbd> <span class="desc">— выйти</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">W</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">K</kbd> / <kbd class="k">Ctrl</kbd>+<kbd class="k">U</kbd> <span class="desc">— вырезать / вставить строку</span></span><span class="item"><kbd class="k">Alt</kbd>+<kbd class="k">U</kbd> <span class="desc">— отменить</span></span></div>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bind-zone</span></div><code class="language-plaintext">$TTL    1D
+@       IN  SOA     au-team.irpo. root.au-team.irpo. (
+                                2025062300  ; serial
+                                12H         ; refresh
+                                1H          ; retry
+                                1W          ; expire
+                                1H          ; ncache
+                                )
+        IN  NS      au-team.irpo.
+1       IN  PTR     hq-rtr.au-team.irpo.
+2       IN  PTR     hq-srv.au-team.irpo.</code></pre>
 
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# nano /var/lib/bind/etc/zone/200.168.192.in-addr.arpa</code></pre>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">$TTL    1D
-@   IN  SOA au-team.irpo. root.au-team.irpo. (2025062300 12H 1H 1W 1H)
-    IN  NS  au-team.irpo.
-1   IN  PTR hq-rtr.au-team.irpo.
-2   IN  PTR hq-cli.au-team.irpo.</code></pre>
+      <h3>7. Обратная зона <code>200.168.192.in-addr.arpa</code></h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# nano /var/lib/bind/etc/zone/200.168.192.in-addr.arpa</code></pre>
+      <div class="kbd-strip"><span class="label">nano:</span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">O</kbd>, <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">X</kbd> <span class="desc">— выйти</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">W</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">K</kbd> / <kbd class="k">Ctrl</kbd>+<kbd class="k">U</kbd> <span class="desc">— вырезать / вставить строку</span></span><span class="item"><kbd class="k">Alt</kbd>+<kbd class="k">U</kbd> <span class="desc">— отменить</span></span></div>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bind-zone</span></div><code class="language-plaintext">$TTL    1D
+@       IN  SOA     au-team.irpo. root.au-team.irpo. (
+                                2025062300  ; serial
+                                12H         ; refresh
+                                1H          ; retry
+                                1W          ; expire
+                                1H          ; ncache
+                                )
+        IN  NS      au-team.irpo.
+1       IN  PTR     hq-rtr.au-team.irpo.
+2       IN  PTR     hq-cli.au-team.irpo.</code></pre>
 
-      <h3>Запуск и проверка</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# chown -R root:named /etc/bind/zone/*
-[root@hq-srv ~]# named-checkconf -z           # все зоны: loaded
-[root@hq-srv ~]# systemctl enable --now bind
-[root@hq-srv ~]# systemctl status bind
+      <h3>8. Ключ <code>rndc</code></h3>
+      <p>Чтобы при ошибке в конфигурации <code>systemctl restart bind</code> не «убил» рабочий сервис, используется утилита <code>rndc</code> — она перезагружает зоны без полного рестарта. Сгенерируем ключ и оставим только секцию <code>key</code> (первые 5 строк):</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# rndc-confgen > /var/lib/bind/etc/rndc.key
+[root@hq-srv ~]# sed -i '6,$d' /var/lib/bind/etc/rndc.key
+[root@hq-srv ~]# cat /var/lib/bind/etc/rndc.key</code></pre>
+      <p>Должно остаться примерно так (секрет у вас будет свой):</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bind</span></div><code class="language-plaintext"># Start of rndc.conf
+key "rndc-key" {
+    algorithm hmac-sha256;
+    secret "SKB1FfUzpWq44SPhErFg5+q5SiSvzp8fklbrZQvNvzs=";
+};</code></pre>
+      <div class="callout warn">
+        <span class="icon">⚠️</span>
+        <div><strong>Типичная ошибка</strong>Если оставить файл целиком, <code>named-checkconf</code> ругнётся:
+          <pre style="margin:6px 0 0;"><code class="language-plaintext">/etc/bind/rndc.key:1: key 'rndc-key' must have both 'secret' and 'algorithm' defined</code></pre>
+          Именно поэтому строки с 6-й и далее вырезаются.
+        </div>
+      </div>
+      <div class="callout note">
+        <span class="icon">💡</span>
+        <div><strong>Внимание к кавычкам</strong>В исходной методичке у <code>sed</code> были «умные» кавычки <code>‘ ’</code> — bash их не примет. Здесь используются обычные одиночные <code>' '</code>.</div>
+      </div>
 
-# Тест с HQ-CLI
-[stud@hq-cli ~]$ host hq-srv.au-team.irpo
-[stud@hq-cli ~]$ host 192.168.100.2</code></pre>
+      <h3>9. Права на файлы зон и проверка конфигурации</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# chown -R root:named /etc/bind/zone/*
+[root@hq-srv ~]# ls -l /etc/bind/zone/
+
+[root@hq-srv ~]# named-checkconf
+[root@hq-srv ~]# named-checkconf -z</code></pre>
+      <p>Команда <code>named-checkconf -z</code> должна показать загрузку всех зон с serial:</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">output</span></div><code class="language-plaintext">zone localhost/IN: loaded serial 2025062300
+zone localdomain/IN: loaded serial 2025062300
+zone 127.in-addr.arpa/IN: loaded serial 2025062300
+zone 0.in-addr.arpa/IN: loaded serial 2025062300
+zone 255.in-addr.arpa/IN: loaded serial 2025062300
+zone au-team.irpo/IN: loaded serial 2025062300
+zone 100.168.192.in-addr.arpa/IN: loaded serial 2025062300
+zone 200.168.192.in-addr.arpa/IN: loaded serial 2025062300</code></pre>
+
+      <div class="callout warn">
+        <span class="icon">⚠️</span>
+        <div><strong>Ошибка <code>NS '…' has no address records (A or AAAA)</code></strong>
+          <pre style="margin:6px 0 0;"><code class="language-plaintext">zone au-team.irpo/IN: NS 'au-team.irpo' has no address records (A or AAAA)
+zone au-team.irpo/IN: not loaded due to errors.
+_default/au-team.irpo/IN: bad zone</code></pre>
+          Возникает, когда в зоне <code>NS</code> указывает на сам апекс (<code>au-team.irpo.</code>), но у апекса нет A-записи. <strong>Фикс:</strong> в прямой зоне <code>au-team.irpo</code> сразу под строкой с <code>NS</code> добавить A-запись для апекса:
+          <pre style="margin:6px 0 0;"><code class="language-diff">          IN  NS      au-team.irpo.
++ @       IN  A       192.168.100.2</code></pre>
+          В обратных зонах ничего добавлять не нужно — там <code>NS au-team.irpo.</code> уже валиден, потому что у имени <code>au-team.irpo.</code> теперь есть A-запись (BIND проверяет это глобально). После правки — <code>named-checkconf -z</code> и <code>systemctl restart bind</code> (или <code>rndc reload</code>).
+        </div>
+      </div>
+
+      <h3>10. Запуск службы</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# systemctl enable --now bind.service
+[root@hq-srv ~]# systemctl status bind.service</code></pre>
+      <p>В выводе должно быть <code>Loaded: ... enabled</code> и <code>Active: active (running)</code>.</p>
+
+      <h3>11. Проверка с HQ-SRV</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# cat /etc/resolv.conf
+# search au-team.irpo
+# nameserver 192.168.100.2
+
+[root@hq-srv ~]# ping -c3 ya.ru</code></pre>
+      <p>Ожидаемый результат — <code>3 received, 0% packet loss</code>: значит резолвинг через локальный BIND с форвардингом во внешний DNS работает.</p>
+
+      <h3>12. Проверка с HQ-CLI</h3>
+      <h4>Записи типа A</h4>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[user@hq-cli ~]$ host hq-srv.au-team.irpo
+hq-srv.au-team.irpo has address 192.168.100.2
+
+[user@hq-cli ~]$ host hq-cli.au-team.irpo
+hq-cli.au-team.irpo has address 192.168.200.2
+
+[user@hq-cli ~]$ host hq-rtr.au-team.irpo
+hq-rtr.au-team.irpo has address 192.168.200.1
+hq-rtr.au-team.irpo has address 192.168.99.1
+hq-rtr.au-team.irpo has address 192.168.100.1
+
+[user@hq-cli ~]$ host docker.au-team.irpo
+docker.au-team.irpo has address 172.16.1.1
+
+[user@hq-cli ~]$ host web.au-team.irpo
+web.au-team.irpo has address 172.16.2.1
+
+[user@hq-cli ~]$ host br-rtr.au-team.irpo
+br-rtr.au-team.irpo has address 192.168.0.1
+
+[user@hq-cli ~]$ host br-srv.au-team.irpo
+br-srv.au-team.irpo has address 192.168.0.2</code></pre>
+
+      <h4>Записи типа PTR</h4>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[user@hq-cli ~]$ host 192.168.100.1
+1.100.168.192.in-addr.arpa domain name pointer hq-rtr.au-team.irpo.
+
+[user@hq-cli ~]$ host 192.168.200.1
+1.200.168.192.in-addr.arpa domain name pointer hq-rtr.au-team.irpo.
+
+[user@hq-cli ~]$ host 192.168.100.2
+2.100.168.192.in-addr.arpa domain name pointer hq-srv.au-team.irpo.
+
+[user@hq-cli ~]$ host 192.168.200.2
+2.200.168.192.in-addr.arpa domain name pointer hq-cli.au-team.irpo.</code></pre>
     </section>
 
     <!-- 14. Timezone -->
@@ -901,44 +1048,65 @@ br-rtr  IN  A       192.168.0.1</code></pre>
     </div>
 
     <!-- 15. Samba DC -->
-    <section id="samba-dc">
-      <h2><span class="num">15</span>🏛️ Контроллер домена Samba DC на BR-SRV</h2>
-      <p>Этот раздел не изменился — Samba DC ставится на BR-SRV (ALT Linux), не зависит от типа роутеров.</p>
+   <section id="samba-dc">
+      <h2><span class="num">14</span>🏛️ Контроллер домена Samba DC на BR-SRV</h2>
 
-      <h3>1. Установка</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-srv ~]# apt-get update && apt-get install -y task-samba-dc</code></pre>
+      <p>
+        Имя домена — <code>au-team.irpo</code>. На BR-SRV поднимается Samba в режиме DC; HQ-CLI вводится в домен; создаются 5 пользователей <code>hquser1…hquser5</code> в группе <code>hq</code>; группе <code>hq</code> разрешается <code>sudo</code> только для <code>cat</code>, <code>grep</code>, <code>id</code>.
+      </p>
 
-      <h3>2. Остановить конфликтующие службы</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-srv ~]# for s in smb nmb krb5kdc slapd bind; do
-                     systemctl disable --now "$s" 2>/dev/null || true
-                 done</code></pre>
+      <div class="callout warn">
+        <span class="icon">⚠️</span>
+        <div><strong>Команды <code>control</code> и <code>roleadd</code> отсутствуют</strong>В этом образе ALT нет ни <code>control</code> (пакет <code>alterator-control</code>), ни <code>roleadd</code> (пакет <code>libnss-role</code>). Поэтому привязку доменной группы <code>hq</code> к локальным правам мы делаем напрямую — через <code>/etc/sudoers.d/</code> (см. шаг 9). Такой способ полностью эквивалентен по эффекту и не зависит от наличия <code>libnss-role</code>.</div>
+      </div>
 
-      <h3>3. Очистка</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-srv ~]# rm -f /etc/samba/smb.conf
+      <h3>1. Установка пакета</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@br-srv ~]# apt-get update && apt-get install -y task-samba-dc</code></pre>
+
+      <h3>2. Отключение конфликтующих служб</h3>
+      <p>Samba DC поднимает свои LDAP, KDC и DNS — поэтому <code>krb5kdc</code>, <code>slapd</code>, <code>bind</code> и обычные <code>smb</code>/<code>nmb</code> нужно остановить:</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@br-srv ~]# for s in smb nmb krb5kdc slapd bind; do
+                       systemctl disable --now "$s" 2>/dev/null || true
+                   done</code></pre>
+
+      <h3>3. Очистка прежнего состояния Samba</h3>
+      <p>Если ранее уже разворачивался домен — снести базы, чтобы <code>provision</code> не споткнулся:</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@br-srv ~]# rm -f  /etc/samba/smb.conf
 [root@br-srv ~]# rm -rf /var/lib/samba /var/cache/samba
 [root@br-srv ~]# mkdir -p /var/lib/samba/sysvol</code></pre>
 
       <h3>4. Развёртывание домена</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-srv ~]# samba-tool domain provision</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@br-srv ~]# samba-tool domain provision</code></pre>
+      <p>В интерактивном диалоге:</p>
       <ul>
-        <li>Все вопросы кроме пароля — <kbd>Enter</kbd>.</li>
-        <li>DNS forwarder — <code>192.168.100.2</code>.</li>
-        <li>Administrator password — <code>P@ssw0rd</code> (мин. 7 символов, 3 группы).</li>
+        <li>На все вопросы кроме пароля — нажимать <strong>Enter</strong> (значения подставляются из hostname/realm).</li>
+        <li><em>DNS forwarder IP address</em> — указать <code>192.168.100.2</code> (HQ-SRV/BIND): внешние запросы DC уйдут на наш центральный DNS, а оттуда — уже во «внешку» через его собственный forwarder.</li>
+        <li><em>Administrator password / Retype password</em> — ввести пароль <strong>не короче 7 символов</strong> и из <strong>3 разных групп символов</strong> (заглавные/строчные/цифры/спецсимволы). Пример: <code>P@ssw0rd!</code>.</li>
       </ul>
 
-      <h3>5. Kerberos и запуск</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-srv ~]# cp /var/lib/samba/private/krb5.conf /etc/krb5.conf
-[root@br-srv ~]# systemctl enable --now samba</code></pre>
+      <h3>5. Kerberos</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@br-srv ~]# cp /var/lib/samba/private/krb5.conf /etc/krb5.conf
+[root@br-srv ~]# systemctl enable --now samba
+[root@br-srv ~]# systemctl restart samba</code></pre>
 
-      <h3>6. resolv.conf</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-srv ~]# nano /etc/net/ifaces/ens19/resolv.conf
-<pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">search au-team.irpo
-nameserver 127.0.0.1</code></pre>
-
+      <h3>6. resolv.conf на BR-SRV</h3>
+      <p>BR-SRV должен ходить за DNS на свой собственный Samba-DNS (<code>127.0.0.1</code>):</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@br-srv ~]# cat > /etc/net/ifaces/ens19/resolv.conf &lt;&lt;'EOF'
+search au-team.irpo
+nameserver 127.0.0.1
+EOF
 [root@br-srv ~]# systemctl restart network</code></pre>
 
-      <h3>7. Группа hq и пользователи hquser1–5</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-srv ~]# samba-tool group add hq
+      <h3>7. Проверка домена</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@br-srv ~]# samba-tool domain info 127.0.0.1
+[root@br-srv ~]# samba-tool domain level show
+[root@br-srv ~]# host -t SRV _ldap._tcp.au-team.irpo
+[root@br-srv ~]# host -t SRV _kerberos._udp.au-team.irpo
+[root@br-srv ~]# kinit administrator@AU-TEAM.IRPO     # имя домена ОБЯЗАТЕЛЬНО заглавными
+[root@br-srv ~]# klist</code></pre>
+
+      <h3>8. Группа <code>hq</code> и пользователи <code>hquser1…5</code></h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@br-srv ~]# samba-tool group add hq
 
 [root@br-srv ~]# for i in {1..5}; do
                      samba-tool user add hquser$i 'P@ssw0rd';
@@ -946,40 +1114,242 @@ nameserver 127.0.0.1</code></pre>
                      samba-tool group addmembers hq hquser$i;
                  done
 
+[root@br-srv ~]# samba-tool user list   | grep -E 'hquser|administrator'
 [root@br-srv ~]# samba-tool group listmembers hq</code></pre>
+
+      <h3>9. Ввод HQ-CLI в домен</h3>
+      <p>На <strong>HQ-CLI</strong> сперва указать BR-SRV в качестве DNS (либо вписать в выдачу DHCP на HQ-RTR), затем ставится <code>task-auth-ad-sssd</code> и через ЦУС выполняется ввод в домен:</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[stud@hq-cli ~]$ host au-team.irpo                   # должен резолвиться
+[stud@hq-cli ~]$ sudo apt-get update && sudo apt-get install -y task-auth-ad-sssd</code></pre>
+      <ol>
+        <li>Открыть <em>Центр управления системой → Аутентификация → Active Directory</em>.</li>
+        <li>Заполнить домен <code>AU-TEAM.IRPO</code>, рабочая группа <code>AU-TEAM</code>, имя/пароль администратора домена.</li>
+        <li><em>Применить</em> → перезагрузить машину.</li>
+      </ol>
+      <p>После перезагрузки доменные пользователи должны появляться в <code>id</code>:</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[stud@hq-cli ~]$ id hquser1@au-team.irpo</code></pre>
+
+      <h3>10. Права <code>sudo</code> для группы <code>hq</code> — без <code>control</code> и <code>roleadd</code></h3>
+      <p>
+        В исходной методичке предлагалось связывать доменную группу <code>hq</code> с локальной <code>wheel</code> через <code>roleadd hq wheel</code> (<code>libnss-role</code>) и переключать <code>sudo</code> через <code>control sudo public</code>. На текущем образе этих утилит нет — обходимся прямой записью в <code>sudoers.d</code>:
+      </p>
+
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-cli ~]# cat > /etc/sudoers.d/hq-domain &lt;&lt;'EOF'
+# Доступ доменной группы hq к ограниченному набору команд через sudo
+# Требуется sssd с case-sensitive=false (по умолчанию) — иначе экранировать @
+Cmnd_Alias HQ_CMDS = /bin/cat, /bin/grep, /usr/bin/id
+
+%hq         ALL=(ALL) NOPASSWD: HQ_CMDS
+"%hq@au-team.irpo" ALL=(ALL) NOPASSWD: HQ_CMDS
+EOF
+
+[root@hq-cli ~]# chmod 440 /etc/sudoers.d/hq-domain
+[root@hq-cli ~]# visudo -cf /etc/sudoers.d/hq-domain     # синтаксическая проверка
+/etc/sudoers.d/hq-domain: parsed OK</code></pre>
+
+      <div class="callout info">
+        <span class="icon">💡</span>
+        <div><strong>Почему две строки <code>%hq</code></strong>В зависимости от того, как sssd возвращает имя группы (короткое <code>hq</code> или полное <code>hq@au-team.irpo</code>), может срабатывать одна из них. Перечислив обе, гарантируем работу независимо от настроек <code>full_name_format</code>/<code>case_sensitive</code> в <code>/etc/sssd/sssd.conf</code>.</div>
+      </div>
+
+      <h3>11. Проверка</h3>
+      <p>Войти на HQ-CLI под доменным пользователем (например <code>hquser1</code>) и убедиться, что:</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash"># аутентификация в домен прошла, пользователь видит свои группы
+[hquser1@hq-cli ~]$ id
+uid=...(hquser1@au-team.irpo) gid=...(hq@au-team.irpo) groups=...(hq@au-team.irpo)...
+
+# разрешённые команды через sudo — работают
+[hquser1@hq-cli ~]$ sudo cat /etc/shadow | head -1
+[hquser1@hq-cli ~]$ sudo grep root /etc/passwd
+[hquser1@hq-cli ~]$ sudo id
+
+# любая другая команда — должна быть отклонена
+[hquser1@hq-cli ~]$ sudo systemctl restart network
+hquser1 is not allowed to run sudo /usr/bin/systemctl ...</code></pre>
+
+      <div class="callout note">
+        <span class="icon">📋</span>
+        <div><strong>Если всё-таки нужен <code>libnss-role</code>/<code>roleadd</code></strong>Поставить пакет и сделать привязку файлом в <code>/etc/role.d/</code>:
+          <pre style="margin:6px 0 0;"><code class="language-bash">[root@hq-cli ~]# apt-get install -y libnss-role
+[root@hq-cli ~]# mkdir -p /etc/role.d
+[root@hq-cli ~]# echo wheel > /etc/role.d/hq      # эквивалент `roleadd hq wheel`</code></pre>
+          Но в нашем варианте без <code>libnss-role</code> в этом нет необходимости — <code>sudoers.d/hq-domain</code> делает то же самое.
+        </div>
+      </div>
     </section>
 
     <!-- 16. RAID -->
     <section id="raid">
-      <h2><span class="num">16</span>💾 RAID 0 на HQ-SRV</h2>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# apt-get install -y mdadm
-[root@hq-srv ~]# lsblk                        # определить sdb, sdc
-[root@hq-srv ~]# mdadm --zero-superblock --force /dev/sdb /dev/sdc
-[root@hq-srv ~]# mdadm --create /dev/md0 --level=0 --raid-devices=2 /dev/sdb /dev/sdc
-[root@hq-srv ~]# mkfs.ext4 /dev/md0
-[root@hq-srv ~]# mkdir -p /raid
-[root@hq-srv ~]# echo "/dev/md0 /raid ext4 defaults 0 0" >> /etc/fstab
-[root@hq-srv ~]# mount -a
-[root@hq-srv ~]# mdadm --detail --scan >> /etc/mdadm.conf
-[root@hq-srv ~]# df -h /raid</code></pre>
+      <h2><span class="num">15</span>💾 Файловое хранилище RAID 0 на HQ-SRV</h2>
+
+      <p>
+        К серверу HQ-SRV подключены два дополнительных диска по <strong>1 ГБ</strong>. Из них собирается программный <strong>RAID 0</strong> (<code>md0</code>), форматируется в <strong>ext4</strong> и автоматически монтируется в <code>/raid</code>. Конфигурация массива сохраняется в <code>/etc/mdadm.conf</code>.
+      </p>
+
+      <h3>1. Установка <code>mdadm</code></h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# apt-get update && apt-get install -y mdadm</code></pre>
+
+      <h3>2. Поиск дисков</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# lsblk
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+sda      8:0    0   20G  0 disk
+└─sda1   8:1    0   20G  0 part /
+sdb      8:16   0    1G  0 disk
+sdc      8:32   0    1G  0 disk</code></pre>
+      <p>Целевые диски — <code>sdb</code> и <code>sdc</code>. Подтверди, что у них нет ни таблицы разделов, ни остаточных метаданных от прошлых массивов.</p>
+
+      <h3>3. Зануление суперблоков</h3>
+      <p>Если на дисках уже когда-то был RAID, mdadm откажется собирать массив. Чистим:</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# mdadm --zero-superblock --force /dev/sdb /dev/sdc</code></pre>
+
+      <h3>4. Создание массива RAID 0</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# mdadm --create --verbose /dev/md0 -l 0 -n 2 /dev/sdb /dev/sdc</code></pre>
+      <p>Параметры:</p>
+      <ul>
+        <li><code>/dev/md0</code> — имя массива (как требует задание).</li>
+        <li><code>-l 0</code> — уровень RAID (stripe).</li>
+        <li><code>-n 2</code> — количество устройств.</li>
+        <li><code>/dev/sdb /dev/sdc</code> — сами устройства.</li>
+      </ul>
+      <p>Проверка:</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# cat /proc/mdstat
+[root@hq-srv ~]# mdadm --detail /dev/md0</code></pre>
+
+      <h3>5. Сохранение конфигурации в <code>/etc/mdadm.conf</code></h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# mdadm --detail --scan --verbose | tee -a /etc/mdadm.conf</code></pre>
+      <p>Без этой записи после перезагрузки массив может собраться под другим именем (<code>md127</code> и т.п.) — задание явно требует <code>md0</code>.</p>
+
+      <h3>6. Файловая система ext4</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# mkfs.ext4 /dev/md0
+[root@hq-srv ~]# blkid /dev/md0          # запомнить UUID для fstab</code></pre>
+
+      <h3>7. Точка монтирования и <code>/etc/fstab</code></h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# mkdir -p /raid
+[root@hq-srv ~]# nano /etc/fstab</code></pre>
+      <div class="kbd-strip"><span class="label">nano:</span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">O</kbd>, <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">X</kbd> <span class="desc">— выйти</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">W</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">K</kbd> / <kbd class="k">Ctrl</kbd>+<kbd class="k">U</kbd> <span class="desc">— вырезать / вставить строку</span></span><span class="item"><kbd class="k">Alt</kbd>+<kbd class="k">U</kbd> <span class="desc">— отменить</span></span></div>
+      <p>Добавить строку (можно по UUID — надёжнее, либо по имени устройства):</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext"># RAID 0 (sdb + sdc) → /raid
+UUID=&lt;UUID-из-blkid&gt;   /raid   ext4   defaults   0 0
+# либо
+/dev/md0               /raid   ext4   defaults   0 0</code></pre>
+
+      <h3>8. Монтирование и проверка</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# mount -av
+/raid                    : successfully mounted
+
+[root@hq-srv ~]# df -h /raid
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/md0        2.0G   24K  1.9G   1% /raid
+
+[root@hq-srv ~]# touch /raid/.alive && ls -la /raid/.alive</code></pre>
+
+      <div class="callout warn">
+        <span class="icon">⚠️</span>
+        <div><strong>Опечатки в исходной методичке</strong>В сысахелпере в команде создания массива использовалась кириллическая «с» в <code>/dev/sdс</code> (визуально неотличима, но ломает команду). И в описании параметра <code>/dev/sd{b,c}</code> упоминался ещё «sdd» — лишний диск. В нашем варианте только <code>sdb</code> и <code>sdc</code>, обе буквы — латиница.</div>
+      </div>
+
+      <div class="callout danger">
+        <span class="icon">🔥</span>
+        <div><strong>RAID 0 — без отказоустойчивости</strong>Это страйп: при потере любого из дисков теряются все данные массива. Подходит для временных/кэш-данных, но не для важных файлов без бэкапа.</div>
+      </div>
     </section>
 
-    <!-- 17. NFS -->
+    <!-- 16. NFS -->
     <section id="nfs">
-      <h2><span class="num">17</span>📂 NFS: HQ-SRV ↔ HQ-CLI</h2>
+      <h2><span class="num">16</span>📂 Сетевая файловая система NFS</h2>
+
+      <p>
+        На <strong>HQ-SRV</strong> поднимается NFS-сервер, экспортирующий каталог <code>/raid/nfs</code> (на смонтированный RAID-массив из предыдущего раздела). Доступ — только из VLAN 200 (<code>192.168.200.0/24</code>) на чтение и запись. На <strong>HQ-CLI</strong> ресурс автоматически монтируется в <code>/mnt/nfs</code>.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Параметр</th><th>Значение</th></tr></thead>
+          <tbody>
+            <tr><td>Сервер</td><td><code>HQ-SRV</code> (<code>192.168.100.2</code>)</td></tr>
+            <tr><td>Экспортируемый каталог</td><td><code>/raid/nfs</code></td></tr>
+            <tr><td>Разрешённая сеть</td><td><code>192.168.200.0/24</code> (VLAN 200, в сторону HQ-CLI)</td></tr>
+            <tr><td>Опции экспорта</td><td><code>rw</code>, <code>no_root_squash</code>, <code>sync</code></td></tr>
+            <tr><td>Точка монтирования на клиенте</td><td><code>/mnt/nfs</code></td></tr>
+          </tbody>
+        </table>
+      </div>
 
       <h3>HQ-SRV — сервер</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# apt-get install -y nfs-server
-[root@hq-srv ~]# mkdir -p /raid/nfs
-[root@hq-srv ~]# echo "/raid/nfs 192.168.200.0/24(rw,sync,no_subtree_check)" >> /etc/exports
+
+      <p><strong>1.</strong> Пакеты NFS-сервера:</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# apt-get update && apt-get install -y nfs-server nfs-utils</code></pre>
+
+      <p><strong>2.</strong> Каталог общего доступа на RAID-массиве:</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# mkdir -p /raid/nfs
+[root@hq-srv ~]# chmod 777 /raid/nfs</code></pre>
+
+      <p><strong>3.</strong> Прописываем экспорт в <code>/etc/exports</code>:</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# nano /etc/exports</code></pre>
+      <div class="kbd-strip"><span class="label">nano:</span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">O</kbd>, <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">X</kbd> <span class="desc">— выйти</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">W</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">K</kbd> / <kbd class="k">Ctrl</kbd>+<kbd class="k">U</kbd> <span class="desc">— вырезать / вставить строку</span></span><span class="item"><kbd class="k">Alt</kbd>+<kbd class="k">U</kbd> <span class="desc">— отменить</span></span></div>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">/raid/nfs    192.168.200.0/24(rw,sync,no_root_squash)</code></pre>
+      <p>Где:</p>
+      <ul>
+        <li><code>/raid/nfs</code> — экспортируемый ресурс.</li>
+        <li><code>192.168.200.0/24</code> — клиентская подсеть VLAN 200 (HQ-CLI).</li>
+        <li><code>rw</code> — чтение и запись.</li>
+        <li><code>sync</code> — синхронная запись (целостность важнее производительности).</li>
+        <li><code>no_root_squash</code> — root клиента остаётся root на сервере (выключаем squashing).</li>
+      </ul>
+
+      <p><strong>4.</strong> Применяем экспорт и поднимаем сервис:</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# exportfs -arv
+exporting 192.168.200.0/24:/raid/nfs
+
 [root@hq-srv ~]# systemctl enable --now nfs-server
-[root@hq-srv ~]# exportfs -arv</code></pre>
+[root@hq-srv ~]# systemctl status nfs-server --no-pager
+[root@hq-srv ~]# showmount -e localhost
+Export list for localhost:
+/raid/nfs 192.168.200.0/24</code></pre>
+      <p>Флаги <code>exportfs</code>: <code>-a</code> — все экспорты, <code>-r</code> — синхронизировать <code>/var/lib/nfs/etab</code> с <code>/etc/exports</code>, <code>-v</code> — подробный вывод.</p>
 
       <h3>HQ-CLI — клиент</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[stud@hq-cli ~]$ sudo apt-get install -y nfs-utils
-[stud@hq-cli ~]$ sudo mkdir -p /mnt/nfs
-[stud@hq-cli ~]$ sudo mount 192.168.100.2:/raid/nfs /mnt/nfs
-[stud@hq-cli ~]$ df -h /mnt/nfs</code></pre>
+
+      <p><strong>1.</strong> Пакеты клиента NFS:</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-cli ~]# apt-get update && apt-get install -y nfs-utils nfs-clients</code></pre>
+
+      <p><strong>2.</strong> Точка монтирования:</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-cli ~]# mkdir -p /mnt/nfs
+[root@hq-cli ~]# chmod 777 /mnt/nfs</code></pre>
+
+      <p><strong>3.</strong> Автомонтирование через <code>/etc/fstab</code>:</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-cli ~]# nano /etc/fstab</code></pre>
+      <div class="kbd-strip"><span class="label">nano:</span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">O</kbd>, <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">X</kbd> <span class="desc">— выйти</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">W</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">K</kbd> / <kbd class="k">Ctrl</kbd>+<kbd class="k">U</kbd> <span class="desc">— вырезать / вставить строку</span></span><span class="item"><kbd class="k">Alt</kbd>+<kbd class="k">U</kbd> <span class="desc">— отменить</span></span></div>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext"># NFS share с HQ-SRV → /mnt/nfs
+192.168.100.2:/raid/nfs   /mnt/nfs   nfs   defaults,_netdev   0 0</code></pre>
+      <p>Опция <code>_netdev</code> подсказывает systemd, что монтирование должно стартовать <em>после</em> появления сети — иначе при загрузке точка может не подняться.</p>
+
+      <p><strong>4.</strong> Монтируем и проверяем:</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-cli ~]# mount -av
+/mnt/nfs                 : successfully mounted
+
+[root@hq-cli ~]# df -h /mnt/nfs
+Filesystem                Size  Used Avail Use% Mounted on
+192.168.100.2:/raid/nfs   2.0G   24K  1.9G   1% /mnt/nfs
+
+[root@hq-cli ~]# touch /mnt/nfs/from-cli.txt
+[root@hq-cli ~]# ls -la /mnt/nfs/</code></pre>
+
+      <p>На HQ-SRV убеждаемся, что файл реально появился:</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# ls -la /raid/nfs/
+-rw-r--r-- 1 root root  0 ... from-cli.txt</code></pre>
+
+      <p>После <code>reboot</code> HQ-CLI каталог должен подняться сам — это и есть автомонтирование.</p>
+
+      <div class="callout warn">
+        <span class="icon">⚠️</span>
+        <div><strong>Если NFS-клиент висит при загрузке</strong>Без <code>_netdev</code> в опциях fstab system пытается смонтировать NFS-шару раньше, чем поднимется сеть, и таймаутит на 90 секунд. Решение — оставить <code>_netdev</code> либо добавить <code>x-systemd.automount,x-systemd.device-timeout=10</code> для ленивого монтирования по запросу.</div>
+      </div>
+
+      <div class="callout note">
+        <span class="icon">🔒</span>
+        <div><strong>Про <code>no_root_squash</code></strong>По умолчанию NFS «сплющивает» UID 0 клиента в <code>nobody</code>, чтобы root одной машины не имел root-доступа к файлам другой. Опция <code>no_root_squash</code> снимает это ограничение — нужна, чтобы root на HQ-CLI мог писать в шару от своего имени; в проде на чужие сети так делать нельзя.</div>
+      </div>
     </section>
 
     <!-- 18. NTP -->
@@ -1034,11 +1404,95 @@ br-rtr.au-team.irpo ansible_port=2026 ansible_user=sshuser</code></pre>
 
     <!-- 20. Docker -->
     <section id="docker">
-      <h2><span class="num">20</span>🐳 Docker на BR-SRV</h2>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-srv ~]# apt-get install -y docker-engine docker-compose
-[root@br-srv ~]# systemctl enable --now docker
-[root@br-srv ~]# docker run hello-world</code></pre>
-    </section>
+      <h2><span class="num">19</span>🐳 Разверните веб-приложение testapp с использованием средств контейнеризации на сервере BR-SRV</h2>
+      <p>Задание: Средствами docker развернуть контейнеры с системой баз данных и веб-приложением из образа Additional.iso на BR-SRV</p>
+      <h3>1. Установить docker и запустить его службу</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@br-srv ~]# apt-get install -y docker-engine docker-compose
+[root@br-srv ~]# systemctl enable --now docker</code></pre>
+
+      <h3>2. Создать docker-compose.yml для приложения</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@br-srv ~]# vim /root/docker-compose.yml</code></pre>
+      <div class="kbd-strip"><span class="label">vim:</span><span class="item"><kbd class="k">i</kbd> / <kbd class="k">Esc</kbd> <span class="desc">— войти в insert / вернуться в command</span></span><span class="item"><kbd class="k">:w</kbd> <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">:q</kbd> / <kbd class="k">:q!</kbd> <span class="desc">— выйти / выйти без сохранения</span></span><span class="item"><kbd class="k">/</kbd>текст <kbd class="k">Enter</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">dd</kbd> / <kbd class="k">yy</kbd> / <kbd class="k">p</kbd> <span class="desc">— удалить / скопировать / вставить строку</span></span><span class="item"><kbd class="k">u</kbd> <span class="desc">— отменить</span></span></div>
+
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">yaml</span></div><code class="language-yaml">version: '3'
+services:
+  database:
+    container_name: db
+    image: mariadb:10.11
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MARIADB_DATABASE: "testdb"
+      MARIADB_USER: "testc"
+      MARIADB_PASSWORD: "P@ssw0rd"
+      MARIADB_ROOT_PASSWORD: "toor"
+
+  app:
+    container_name: testapp
+    image: site:latest
+    restart: always
+    ports:
+      - "8080:8000"
+    environment:
+      DB_TYPE: "maria"
+      DB_HOST: "192.168.0.2"
+      DB_PORT: "3306"
+      DB_NAME: "testdb"
+      DB_USER: "testc"
+      DB_PASS: "P@ssw0rd"
+    depends_on:
+      - database</code></pre>
+    <h3>3. Смонтировать Additional.iso в директорию /mnt</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@br-srv ~]# mount /dev/sr0 /mnt</code></pre>
+    <h3>4. Выполнить импорт образов mariadb и site</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@br-srv ~]# docker load < /mnt/docker/site_latest.tar
+fd2750d7a50e: Loading layer [==================================>]  8.594MB/8.594MB
+40b0a95a818e: Loading layer [==================================>]  1.689MB/1.689MB
+040d7a095707: Loading layer [==================================>]  37.29MB/37.29MB
+6a9854a10c2e: Loading layer [==================================>]  5.12kB/5.12kB
+b3ec3c3769f3: Loading layer [==================================>]  1.536kB/1.536kB
+12d275e5fc40: Loading layer [==================================>]  176.4MB/176.4MB
+43e94e56cf9e: Loading layer [==================================>]  3.072kB/3.072kB
+b697f445a0f2: Loading layer [==================================>]  129.1MB/129.1MB
+79ad03de2c0b: Loading layer [==================================>]  842.8kB/842.8kB
+Loaded image: site:latest
+
+[root@br-srv ~]# docker load < /mnt/docker/mariadb_latest.tar
+f862e1968e4b: Loading layer [==================================>]  80.41MB/80.41MB
+f034330494cf: Loading layer [==================================>]  337.9kB/337.9kB
+500203cbdf: Loading layer [==================================>]  16.33MB/16.33MB
+11a34bc1cb: Loading layer [==================================>]  1.536kB/1.536kB
+bf683d68a: Loading layer [==================================>]  5.12kB/5.12kB
+2be2f7b4f7a7: Loading layer [==================================>]  235.6MB/235.6MB
+e8ecae52c35a: Loading layer [==================================>]  13.82kB/13.82kB
+d3e9e08bf0e1: Loading layer [==================================>]  29.7kB/29.7kB
+Loaded image: mariadb:latest
+[root@br-srv ~]# 
+</code></pre>
+    <h3>5. Проверяем наши образы</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@br-srv ~]# docker images ls
+REPOSITORY   TAG       IMAGE ID       CREATED        SIZE
+site         latest    015b4b821098   2 weeks ago    353MB
+mariadb      10.11     bc52d24721da   2 months ago   327MB
+[root@br-srv ~]#</code></pre>
+
+      <h3>6. Запускаем наши приложения</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@br-srv ~]# docker compose up -d
+[+] Running 3/3
+ ✔ Network root_default   Created
+ ✔ Container db           Started
+ ✔ Container testapp      Started
+[root@br-srv ~]#</code></pre>
+      <h3>7. Проверяем статус приложений</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@br-srv ~]# docker compose ps
+NAME      IMAGE          COMMAND                  SERVICE    CREATED        STATUS        PORTS
+db        mariadb:10.11  "docker-entrypoint.sh"   database   2 minutes ago  Up 2 minutes  0.0.0.0:3306->3306/tcp, [::]:3306->3306/tcp
+testapp   site:latest    "sh -c 'python3 -m a"    app        2 minutes ago  Up 2 minutes  0.0.0.0:8080->8000/tcp, [::]:8080->8000/tcp
+[root@br-srv ~]#</code></pre>
+      <h3>8. Заходим на 192.168.0.2 с HQ-CLI</h3>
+      <img src="./screenshots/check-docker.png" class="screenshot" alt="Проверка приложения в браузере">
+</section>
 
     <!-- FRR cheatsheet -->
     <section id="frr-cheatsheet" style="margin-top: 32px;">
