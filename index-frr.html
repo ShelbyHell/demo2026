@@ -277,10 +277,9 @@
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash"># VLAN 100 — HQ-SRV
 [root@hq-rtr ~]# mkdir -p /etc/net/ifaces/enp6s21.100
 [root@hq-rtr ~]# nano /etc/net/ifaces/enp6s21.100/options
+
 <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">TYPE=vlan
 BOOTPROTO=static
-CONFIG_WIRELESS=no
-SYSTEMD_WAITONLINE=no
 VID=100
 HOST=enp6s21</code></pre>
 
@@ -289,10 +288,9 @@ HOST=enp6s21</code></pre>
 # VLAN 200 — HQ-CLI (DHCP-клиенты)
 [root@hq-rtr ~]# mkdir -p /etc/net/ifaces/enp6s21.200
 [root@hq-rtr ~]# nano /etc/net/ifaces/enp6s21.200/options
+
 <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">TYPE=vlan
 BOOTPROTO=static
-CONFIG_WIRELESS=no
-SYSTEMD_WAITONLINE=no
 VID=200
 HOST=enp6s21</code></pre>
 
@@ -301,10 +299,9 @@ HOST=enp6s21</code></pre>
 # VLAN 999 — management
 [root@hq-rtr ~]# mkdir -p /etc/net/ifaces/enp6s21.999
 [root@hq-rtr ~]# nano /etc/net/ifaces/enp6s21.999/options
+
 <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">TYPE=vlan
 BOOTPROTO=static
-CONFIG_WIRELESS=no
-SYSTEMD_WAITONLINE=no
 VID=999
 HOST=enp6s21</code></pre>
 
@@ -642,25 +639,35 @@ BOOTPROTO=static</code></pre>
         </div>
       </div>
 
+      <h3>ISP</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@isp ~]# vtysh</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">isp# configure terminal
+
+isp(config)# router ospf
+
+isp(config-router)# network 172.16.1.0/28 area 0
+isp(config-router)# network 172.16.2.0/28 area 0
+
+isp(config-router)# exit
+
+isp(config)# end
+isp# write
+isp# show ip ospf interface brief
+isp# show ip ospf neighbor</code></pre>
+
       <h3>HQ-RTR</h3>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# vtysh</code></pre>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">hq-rtr# configure terminal
 
 hq-rtr(config)# router ospf
-hq-rtr(config-router)# ospf router-id 10.10.10.1
 hq-rtr(config-router)# passive-interface default
 hq-rtr(config-router)# no passive-interface tunnel0
 
-hq-rtr(config-router)# network 10.10.10.0/30    area 0
+hq-rtr(config-router)# network 172.16.1.0/28 area 0
 hq-rtr(config-router)# network 192.168.100.0/27 area 0
 hq-rtr(config-router)# network 192.168.200.0/24 area 0
 hq-rtr(config-router)# network 192.168.99.0/29  area 0
 hq-rtr(config-router)# exit
-
-hq-rtr(config)# interface tunnel0
-hq-rtr(config-if)# ip ospf authentication message-digest
-hq-rtr(config-if)# ip ospf message-digest-key 1 md5 P@ssw0rd
-hq-rtr(config-if)# exit
 
 hq-rtr(config)# end
 hq-rtr# write
@@ -676,14 +683,9 @@ br-rtr(config-router)# ospf router-id 10.10.10.2
 br-rtr(config-router)# passive-interface default
 br-rtr(config-router)# no passive-interface tunnel0
 
-br-rtr(config-router)# network 192.168.0.0/28 area 0
+hq-rtr(config-router)# network 172.16.2.0/28 area 0
 br-rtr(config-router)# network 10.10.10.0/30  area 0
 br-rtr(config-router)# exit
-
-br-rtr(config)# interface tunnel0
-br-rtr(config-if)# ip ospf authentication message-digest
-br-rtr(config-if)# ip ospf message-digest-key 1 md5 P@ssw0rd
-br-rtr(config-if)# exit
 
 br-rtr(config)# end
 br-rtr# write
