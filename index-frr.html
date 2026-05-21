@@ -265,6 +265,7 @@
 
       <h4>Uplink-интерфейс (enp6s20 — сторона ISP)</h4>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# echo "172.16.1.2/28" > /etc/net/ifaces/enp6s20/ipv4address
+[root@br-rtr ~]# echo "nameserver 95.167.167.95" > /etc/net/ifaces/enp6s20/resolv.conf
 [root@hq-rtr ~]# echo "default via 172.16.1.1" > /etc/net/ifaces/enp6s20/ipv4route</code></pre>
 
       <h4>Настройка работы интерфейсов</h4>
@@ -332,6 +333,7 @@ HOST=enp6s21</code></pre>
       <h4>Uplink (enp6s20) и LAN (enp6s21)</h4>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash"># Uplink
 [root@br-rtr ~]# echo "172.16.2.2/28" > /etc/net/ifaces/enp6s20/ipv4address
+[root@br-rtr ~]# echo "nameserver 95.167.167.95" > /etc/net/ifaces/enp6s20/resolv.conf
 [root@br-rtr ~]# echo "default via 172.16.2.1" > /etc/net/ifaces/enp6s20/ipv4route
 
 # LAN
