@@ -661,7 +661,9 @@ isp(config-router)# exit
 isp(config)# end
 isp# write
 isp# show ip ospf interface brief
-isp# show ip ospf neighbor</code></pre>
+isp# show ip ospf neighbor
+isp# exit
+[root@isp]# systemctl restart frr</code></pre>
 
       <h3>HQ-RTR</h3>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# vtysh</code></pre>
@@ -680,7 +682,9 @@ hq-rtr(config-router)# exit
 hq-rtr(config)# end
 hq-rtr# write
 hq-rtr# show ip ospf interface brief
-hq-rtr# show ip ospf neighbor</code></pre>
+hq-rtr# show ip ospf neighbor
+hq-rtr# exit
+[root@hq-rtr]# systemctl restart frr</code></pre>
 
       <h3>BR-RTR</h3>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-rtr ~]# vtysh</code></pre>
@@ -697,7 +701,9 @@ br-rtr(config-router)# exit
 br-rtr(config)# end
 br-rtr# write
 br-rtr# show ip ospf interface brief
-br-rtr# show ip ospf neighbor</code></pre>
+br-rtr# show ip ospf neighbor
+br-rtr# exit
+[root@hq-rtr]# systemctl restart frr</code></pre>
 
       <h3>Проверка OSPF</h3>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">hq-rtr# show ip ospf neighbor
