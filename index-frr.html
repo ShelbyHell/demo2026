@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Настройка корпоративной сети HQ ↔ BR (FRR)</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css">
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/bash.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/diff.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/plaintext.min.js"></script>
+
+<link rel="stylesheet" href="style.css">
+<style>
+  .copy-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #6e7681;
+    background: none;
+    border: 1px solid #30363d;
+    border-radius: 4px;
+    padding: 2px 8px;
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+    margin-left: auto;
+  }
+  .copy-btn:hover { color: #e6edf3; border-color: #58a6ff; }
+  pre .code-header { display: flex; align-items: center; gap: 8px; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <aside class="toc" aria-label="Содержание">
+    <h2>Содержание</h2>
+    <ol>
+      <li><a href="#intro">Введение</a></li>
+      <li><a href="#credentials">Учётные данные</a></li>
+      <li><a href="#topology">Схема и адресация</a></li>
+      <li><a href="#basic">Базовая настройка</a></li>
+      <li><a href="#isp">ISP: IP, NAT, форвардинг</a></li>
+      <li><a href="#uplinks">HQ-RTR / BR-RTR → интернет</a></li>
+      <li><a href="#frr-install">Установка FRR</a></li>
+      <li><a href="#users">Пользователи</a></li>
+      <li><a href="#ssh">SSH на серверах</a></li>
+      <li><a href="#gre">GRE-туннель</a></li>
+      <li><a href="#ospf">OSPF (FRR vtysh)</a></li>
+      <li><a href="#nat">NAT на роутерах (iptables)</a></li>
+      <li><a href="#dhcp">DHCP на VLAN 200</a></li>
+      <li><a href="#dns">DNS-сервер (BIND) на HQ-SRV</a></li>
+      <li><a href="#tz">Часовой пояс</a></li>
+      <li><a href="#samba-dc">Samba DC на BR-SRV</a></li>
+      <li><a href="#raid">RAID 0 на HQ-SRV</a></li>
+      <li><a href="#nfs">NFS: HQ-SRV ↔ HQ-CLI</a></li>
+      <li><a href="#chrony">NTP (chrony) на ISP</a></li>
+      <li><a href="#ansible">Ansible на BR-SRV</a></li>
+      <li><a href="#docker">Docker на BR-SRV</a></li>
+      <li><a href="#static-nat">Статический NAT (DNAT)</a></li>
+      <li><a href="#nginx-setup">Настройка Nginx</a></li>
+      <li><a href="#web-auth">Web-аутентификация</a></li>
+      <li><a href="#yandex-browser">Яндекс Браузер</a></li>
+    </ol>
+  </aside>
+
+  <main>
+
+    <header class="hero">
+      <span class="eyebrow">Сетевая лаборатория · au-team.irpo · FRR Edition</span>
+      <h1>Настройка корпоративной сети HQ ↔ BR</h1>
+      <p class="lead">
+        Руководство для стенда на базе <strong>ALT Linux + FRR (Free Range Routing)</strong>.
+        Роутеры HQ-RTR и BR-RTR — обычные Linux-машины: сеть через <code>/etc/net/ifaces</code>,
+        GRE через <code>ip tunnel</code>, OSPF через FRR <code>vtysh</code>, NAT через <code>iptables</code>.
+      </p>
+      <div class="badges">
+        <span class="badge green">FRR / vtysh</span>
+        <span class="badge accent">ALT Linux</span>
+        <span class="badge purple">OSPF MD5</span>
+        <span class="badge cyan">GRE</span>
+        <span class="badge accent">iptables · MASQUERADE</span>
+        <span class="badge">DHCP · ISC</span>
+        <span class="badge">SSH</span>
+      </div>
+    </header>
+
+    <!-- 00. Intro -->
+    <section id="intro">
+      <h2><span class="num">00</span>📘 Как пользоваться этой методичкой</h2>
+      <p>Это адаптация стандартного руководства под <strong>FRR (Free Range Routing)</strong> вместо EcoRouter. HQ-RTR и BR-RTR теперь — обычные Linux-серверы (ALT Linux) с пакетом <code>frr</code>. Вся конфигурация роутинга делается через <code>vtysh</code>, сетевые интерфейсы — через стандартные ALT-механизмы <code>/etc/net/ifaces/</code>.</p>
+
+      <div class="callout success">
+        <span class="icon">🦓</span>
+        <div><strong>Что такое FRR</strong>
+          Free Range Routing — опенсорсный стек маршрутизации для Linux (форк Quagga). Поддерживает OSPF, BGP, IS-IS, RIP, MPLS и многое другое. Управляется через общий шелл <code>vtysh</code> с синтаксисом, похожим на Cisco IOS. Страница проекта: <a href="https://frrouting.org">frrouting.org</a>.
+        </div>
+      </div>
+
+      <h3>Устройства в стенде</h3>
+      <div class="callout note">
+        <span class="icon">📍</span>
+        <div>
+          <ul style="margin:6px 0 0 16px; padding:0 0 0 16px;">
+            <li><strong>ISP</strong> — внешний роутер, от него идёт интернет (ALT Linux + iptables).</li>
+            <li><strong>HQ-RTR</strong> — центральный офис: <strong>ALT Linux + FRR</strong>, VLAN-сабинтерфейсы, GRE, OSPF, NAT, DHCP.</li>
+            <li><strong>BR-RTR</strong> — филиал: <strong>ALT Linux + FRR</strong>, LAN, GRE, OSPF, NAT.</li>
+            <li><strong>HQ-SRV</strong> — сервер: DNS (BIND), RAID, NFS.</li>
+            <li><strong>BR-SRV</strong> — сервер домена Samba DC.</li>
+            <li><strong>HQ-CLI</strong> — рабочая станция, получает адрес по DHCP.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Editor cheat -->
+      <div class="editor-cheat" id="editors">
+        <div class="head">
+          <span class="ic">📒</span>
+          <span class="title">Шпаргалка: nano и vim</span>
+          <span class="lead">пригодится в каждом шаге, где правится конфиг</span>
+        </div>
+        <div class="grid">
+          <div class="col">
+            <h4>nano</h4>
+            <table>
+              <tr><td><kbd>Ctrl</kbd>+<kbd>O</kbd>, <kbd>Enter</kbd></td><td>сохранить</td></tr>
+              <tr><td><kbd>Ctrl</kbd>+<kbd>X</kbd></td><td>выйти</td></tr>
+              <tr><td><kbd>Ctrl</kbd>+<kbd>W</kbd></td><td>поиск</td></tr>
+              <tr><td><kbd>Ctrl</kbd>+<kbd>K</kbd> / <kbd>Ctrl</kbd>+<kbd>U</kbd></td><td>вырезать / вставить</td></tr>
+              <tr><td><kbd>Alt</kbd>+<kbd>U</kbd></td><td>отменить</td></tr>
+            </table>
+          </div>
+          <div class="col">
+            <h4>vim</h4>
+            <table>
+              <tr><td><kbd>i</kbd> / <kbd>Esc</kbd></td><td>insert / command</td></tr>
+              <tr><td><kbd>:wq</kbd> <kbd>Enter</kbd></td><td>сохранить и выйти</td></tr>
+              <tr><td><kbd>:q!</kbd></td><td>выйти без сохранения</td></tr>
+              <tr><td><kbd>/</kbd>текст</td><td>поиск</td></tr>
+              <tr><td><kbd>:%s/old/new/g</kbd></td><td>замена</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 01. Credentials -->
+    <section id="credentials">
+      <h2><span class="num">01</span>🔑 Учётные данные</h2>
+
+      <h3>Начальный доступ</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Устройство</th><th>Логин</th><th>Пароль</th></tr></thead>
+          <tbody>
+            <tr><td><strong>PVE</strong> (гипервизор)</td><td><code>root</code></td><td><code>P@ss090206!</code></td></tr>
+            <tr><td><strong>HQ-RTR</strong>, <strong>BR-RTR</strong> (Linux)</td><td><code>root</code></td><td><code>P@ss090206!</code></td></tr>
+            <tr><td><strong>HQ-SRV</strong>, <strong>BR-SRV</strong></td><td><code>root</code></td><td><code>P@ss090206!</code></td></tr>
+            <tr><td><strong>HQ-CLI</strong></td><td><code>stud</code></td><td><code>P@ss090206!</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout info">
+        <span class="icon">💡</span>
+        <div><strong>FRR: нет admin/admin</strong>
+          В отличие от EcoRouter, роутеры теперь — обычные Linux-машины. Входим под <code>root</code>. Привилегированный режим FRR (<code>vtysh</code>) тоже доступен без дополнительного пароля пользователю из группы <code>frrvty</code>.
+        </div>
+      </div>
+
+      <h3>Созданные по заданию</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Устройство</th><th>Логин</th><th>Пароль</th><th>Особенности</th></tr></thead>
+          <tbody>
+            <tr><td><strong>HQ-SRV</strong>, <strong>BR-SRV</strong>, <strong>HQ-RTR</strong>, <strong>BR-RTR</strong></td><td><code>sshuser</code></td><td><code>P@ssw0rd</code></td><td>UID <code>2026</code>, группа <code>wheel</code>, sudo без пароля, SSH порт <code>2026</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 02. Topology -->
+    <section id="topology">
+      <h2><span class="num">02</span>🗺️ Схема сети и адресация</h2>
+
+      <figure class="topology">
+<pre><code>                ┌────────────┐
+                │    ISP     │  ens19 → uplink (интернет)
+                │ ALT Linux  │
+       ens20 ───┤            ├─── ens21
+       172.16.1.1/28          172.16.2.1/28
+                └──────┬─────┘
+                       │
+       ┌───────────────┼───────────────┐
+       │                               │
+  172.16.1.2/28                   172.16.2.2/28
+  ┌──────────────┐             ┌──────────────┐
+  │   HQ-RTR     │◄─ GRE ─────►│   BR-RTR     │
+  │  ALT+FRR     │  10.10.10.0/30   ALT+FRR   │
+  └──┬───────────┘             └───────┬──────┘
+     │ VLAN-сабинтерфейсы              │
+     │ enp6s21.100 → 192.168.100.1/27    │ enp6s21 → 192.168.0.1/28
+     │ enp6s21.200 → 192.168.200.1/24    │     └─ BR-SRV: .2
+     │ enp6s21.999 → 192.168.99.1/29     │
+     └─ HQ-SRV: 192.168.100.2
+     └─ HQ-CLI: 192.168.200.x (DHCP)</code></pre>
+        <figcaption>ALT Linux + FRR на обоих роутерах; туннель GRE поверх ISP-подсети; OSPF через туннель.</figcaption>
+      </figure>
+
+      <h3>Таблица подсетей</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Сегмент</th><th>Подсеть</th><th>Шлюз</th><th>Назначение</th></tr></thead>
+          <tbody>
+            <tr><td>VLAN 100</td><td><code>192.168.100.0/27</code></td><td><code>192.168.100.1</code></td><td>HQ-SRV</td></tr>
+            <tr><td>VLAN 200</td><td><code>192.168.200.0/24</code></td><td><code>192.168.200.1</code></td><td>HQ-CLI (DHCP)</td></tr>
+            <tr><td>VLAN 999</td><td><code>192.168.99.0/29</code></td><td><code>192.168.99.1</code></td><td>management</td></tr>
+            <tr><td>BR LAN</td><td><code>192.168.0.0/28</code></td><td><code>192.168.0.1</code></td><td>BR-SRV и др.</td></tr>
+            <tr><td>ISP ↔ HQ-RTR</td><td><code>172.16.1.0/28</code></td><td><code>172.16.1.1</code></td><td>uplink HQ</td></tr>
+            <tr><td>ISP ↔ BR-RTR</td><td><code>172.16.2.0/28</code></td><td><code>172.16.2.1</code></td><td>uplink BR</td></tr>
+            <tr><td>GRE Tunnel</td><td><code>10.10.10.0/30</code></td><td>—</td><td>HQ-RTR ↔ BR-RTR</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Module 1 -->
+    <div class="module-banner" id="module-1">
+      <span class="badge">Модуль 1</span>
+      <div>
+        <div class="title">Настройка сетевой инфраструктуры</div>
+        <div class="subtitle">Разделы 03 – 13 — FRR вместо EcoRouter</div>
+      </div>
+    </div>
+
+    <!-- 03. Basic setup -->
+    <section id="basic">
+      <h2><span class="num">03</span>⚙️ Базовая настройка устройств</h2>
+
+      <div class="callout info">
+        <span class="icon">ℹ️</span>
+        <div><strong>ALT Linux: сеть через /etc/net/ifaces</strong>
+          На всех Linux-машинах сетевые настройки хранятся в <code>/etc/net/ifaces/&lt;iface&gt;/</code>. Файл <code>ipv4address</code> — адрес, <code>ipv4route</code> — маршруты, <code>resolv.conf</code> — DNS, <code>options</code> — тип и параметры интерфейса. После изменений — <code>systemctl restart network</code>.
+        </div>
+      </div>
+
+      <h3>ISP</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@stendssa ~]# hostnamectl set-hostname isp; bash
+[root@isp ~]#</code></pre>
+
+      <h3>HQ-RTR (ALT Linux)</h3>
+      <h4>Hostname и IP-форвардинг</h4>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@alt ~]# hostnamectl set-hostname hq-rtr.au-team.irpo; bash
+
+# Включить IP-форвардинг
+[root@hq-rtr ~]# nano /etc/net/sysctl.conf</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">diff</span></div><code class="language-diff">- net.ipv4.ip_forward = 0
++ net.ipv4.ip_forward = 1</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# systemctl restart network
+[root@hq-rtr ~]# sysctl net.ipv4.ip_forward    # должно быть = 1</code></pre>
+
+      <h4>Uplink-интерфейс (enp6s20 — сторона ISP)</h4>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# echo "172.16.1.2/28" > /etc/net/ifaces/enp6s20/ipv4address
+[root@hq-rtr ~]# echo "default via 172.16.1.1" > /etc/net/ifaces/enp6s20/ipv4route</code></pre>
+
+      <h4>VLAN-сабинтерфейсы на enp6s21 (LAN-транк)</h4>
+      <div class="callout info">
+        <span class="icon">💡</span>
+        <div><strong>VLAN в ALT Linux</strong>
+          Для каждого VLAN создаётся папка <code>/etc/net/ifaces/enp6s21.&lt;vid&gt;/</code> с файлом <code>options</code> (тип <code>vlan</code>) и <code>ipv4address</code>. Модуль ядра <code>8021q</code> подгружается автоматически.
+        </div>
+      </div>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash"># VLAN 100 — HQ-SRV
+[root@hq-rtr ~]# mkdir -p /etc/net/ifaces/enp6s21.100
+[root@hq-rtr ~]# nano /etc/net/ifaces/enp6s21.100/options
+<pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">TYPE=vlan
+BOOTPROTO=static
+CONFIG_WIRELESS=no
+SYSTEMD_WAITONLINE=no
+VID=100
+HOST=enp6s21</code></pre>
+
+[root@hq-rtr ~]# echo "192.168.100.1/27" > /etc/net/ifaces/enp6s21.100/ipv4address
+
+# VLAN 200 — HQ-CLI (DHCP-клиенты)
+[root@hq-rtr ~]# mkdir -p /etc/net/ifaces/enp6s21.200
+[root@hq-rtr ~]# nano /etc/net/ifaces/enp6s21.200/options
+<pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">TYPE=vlan
+BOOTPROTO=static
+CONFIG_WIRELESS=no
+SYSTEMD_WAITONLINE=no
+VID=200
+HOST=enp6s21</code></pre>
+
+[root@hq-rtr ~]# echo "192.168.200.1/24" > /etc/net/ifaces/enp6s21.200/ipv4address
+
+# VLAN 999 — management
+[root@hq-rtr ~]# mkdir -p /etc/net/ifaces/enp6s21.999
+[root@hq-rtr ~]# nano /etc/net/ifaces/enp6s21.999/options
+<pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">TYPE=vlan
+BOOTPROTO=static
+CONFIG_WIRELESS=no
+SYSTEMD_WAITONLINE=no
+VID=999
+HOST=enp6s21</code></pre>
+
+[root@hq-rtr ~]# echo "192.168.99.1/29" > /etc/net/ifaces/enp6s21.999/ipv4address
+
+[root@hq-rtr ~]# systemctl restart network
+[root@hq-rtr ~]# ip -c a</code></pre>
+
+      <h3>BR-RTR (ALT Linux)</h3>
+      <h4>Hostname и IP-форвардинг</h4>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@alt ~]# hostnamectl set-hostname br-rtr.au-team.irpo; bash
+
+[root@br-rtr ~]# nano /etc/net/sysctl.conf</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">diff</span></div><code class="language-diff">- net.ipv4.ip_forward = 0
++ net.ipv4.ip_forward = 1</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-rtr ~]# systemctl restart network
+[root@br-rtr ~]# sysctl net.ipv4.ip_forward    # = 1</code></pre>
+
+      <h4>Uplink (enp6s20) и LAN (enp6s21)</h4>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash"># Uplink
+[root@br-rtr ~]# echo "172.16.2.2/28" > /etc/net/ifaces/enp6s20/ipv4address
+[root@br-rtr ~]# echo "default via 172.16.2.1" > /etc/net/ifaces/enp6s20/ipv4route
+
+# LAN
+[root@br-rtr ~]# echo "192.168.0.1/28" > /etc/net/ifaces/enp6s21/ipv4address
+
+[root@br-rtr ~]# systemctl restart network
+[root@br-rtr ~]# ip -c a</code></pre>
+
+      <h3>HQ-SRV</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@alt ~]# hostnamectl set-hostname hq-srv.au-team.irpo; bash
+
+[root@hq-srv ~]# echo "192.168.100.2/27" > /etc/net/ifaces/ens19/ipv4address
+[root@hq-srv ~]# echo "default via 192.168.100.1" > /etc/net/ifaces/ens19/ipv4route
+[root@hq-srv ~]# echo "nameserver 95.167.167.95" > /etc/net/ifaces/ens19/resolv.conf
+
+[root@hq-srv ~]# systemctl restart network
+[root@hq-srv ~]# ip -c a</code></pre>
+
+      <h3>BR-SRV</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@alt ~]# hostnamectl set-hostname br-srv.au-team.irpo; bash
+
+[root@br-srv ~]# echo "192.168.0.2/28" > /etc/net/ifaces/ens19/ipv4address
+[root@br-srv ~]# echo "default via 192.168.0.1" > /etc/net/ifaces/ens19/ipv4route
+[root@br-srv ~]# echo "nameserver 95.167.167.95" > /etc/net/ifaces/ens19/resolv.conf
+
+[root@br-srv ~]# systemctl restart network
+[root@br-srv ~]# ip -c a</code></pre>
+
+      <h3>HQ-CLI</h3>
+      <p>Hostname через ЦУС (<em>Меню → Системные → Центр управления системой</em>) или в терминале:</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[stud@hq-cli ~]$ su -c "hostnamectl set-hostname hq-cli.au-team.irpo"
+[stud@hq-cli ~]$ hostname -f    # hq-cli.au-team.irpo</code></pre>
+      <div class="callout info">
+        <span class="icon">📡</span>
+        <div><strong>IP по DHCP</strong> — HQ-CLI в VLAN 200 получает адрес автоматически после настройки DHCP-сервера на HQ-RTR (раздел 12). Ничего дополнительно настраивать не нужно.</div>
+      </div>
+    </section>
+
+    <!-- 04. ISP -->
+    <section id="isp">
+      <h2><span class="num">04</span>🌍 Настройка ISP: IP, NAT, форвардинг</h2>
+
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash"># Скопировать шаблон интерфейса
+[root@isp ~]# cp -r /etc/net/ifaces/ens19 /etc/net/ifaces/ens20
+[root@isp ~]# cp -r /etc/net/ifaces/ens19 /etc/net/ifaces/ens21
+
+# Убрать маршрут по умолчанию у внутренних интерфейсов
+[root@isp ~]# rm -rf /etc/net/ifaces/ens2*/ipv4route
+
+# Назначить адреса
+[root@isp ~]# echo "172.16.1.1/28" > /etc/net/ifaces/ens20/ipv4address
+[root@isp ~]# echo "172.16.2.1/28" > /etc/net/ifaces/ens21/ipv4address
+
+[root@isp ~]# systemctl restart network
+[root@isp ~]# ip -c a</code></pre>
+
+      <h4>Форвардинг</h4>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@isp ~]# nano /etc/net/sysctl.conf</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">diff</span></div><code class="language-diff">- net.ipv4.ip_forward = 0
++ net.ipv4.ip_forward = 1</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@isp ~]# systemctl restart network
+[root@isp ~]# sysctl net.ipv4.ip_forward
+
+# NAT (MASQUERADE)
+[root@isp ~]# iptables -t nat -A POSTROUTING -s 172.16.1.0/28 -o ens19 -j MASQUERADE
+[root@isp ~]# iptables -t nat -A POSTROUTING -s 172.16.2.0/28 -o ens19 -j MASQUERADE
+
+[root@isp ~]# iptables-save >> /etc/sysconfig/iptables
+[root@isp ~]# systemctl enable --now iptables
+
+[root@isp ~]# iptables -t nat -L -n -v    # проверка</code></pre>
+    </section>
+
+    <!-- 05. Uplinks -->
+    <section id="uplinks">
+      <h2><span class="num">05</span>🔌 Проверка связи роутеров с ISP</h2>
+
+      <p>К этому моменту uplink-адреса уже прописаны (раздел 03). Проверяем связь:</p>
+
+      <h3>HQ-RTR</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# ping -c3 172.16.1.1    # ISP
+[root@hq-rtr ~]# ping -c3 8.8.8.8       # интернет через ISP NAT
+[root@hq-rtr ~]# ip route</code></pre>
+
+      <h3>BR-RTR</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-rtr ~]# ping -c3 172.16.2.1
+[root@br-rtr ~]# ping -c3 8.8.8.8
+[root@br-rtr ~]# ip route</code></pre>
+    </section>
+
+    <!-- 06. FRR Install -->
+    <section id="frr-install">
+      <h2><span class="num">06</span>🦓 Установка и настройка FRR</h2>
+
+      <div class="callout success">
+        <span class="icon">✅</span>
+        <div><strong>Выполняется на HQ-RTR и BR-RTR</strong> — обе машины одинаково.</div>
+      </div>
+
+      <h3>Установка пакета</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# apt-get update && apt-get install -y frr frr-pythontools</code></pre>
+
+      <h3>Включить демоны ospfd и zebra</h3>
+      <p>В файле <code>/etc/frr/daemons</code> включить нужные демоны:</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# nano /etc/frr/daemons</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">diff</span></div><code class="language-diff">- zebra=no
++ zebra=yes
+
+- ospfd=no
++ ospfd=yes</code></pre>
+
+      <h3>Запуск FRR</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# systemctl enable --now frr
+[root@hq-rtr ~]# systemctl status frr
+
+# Войти в оболочку vtysh
+[root@hq-rtr ~]# vtysh
+hq-rtr# show version</code></pre>
+
+      <div class="callout info">
+        <span class="icon">💡</span>
+        <div><strong>vtysh — единая оболочка FRR</strong>
+          Работает аналогично Cisco IOS: режимы <code>enable</code> / <code>configure terminal</code> / <code>end</code>. Сохранение конфигурации: <code>write</code> или <code>copy running-config startup-config</code>. Файл хранится в <code>/etc/frr/frr.conf</code>.
+        </div>
+      </div>
+
+      <h3>Таблица команд vtysh vs EcoRouter</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Действие</th><th>EcoRouter</th><th>FRR vtysh</th></tr></thead>
+          <tbody>
+            <tr><td>Привилегированный режим</td><td><code>enable</code></td><td><code>vtysh</code> (уже в нём)</td></tr>
+            <tr><td>Режим конфигурации</td><td><code>configure terminal</code></td><td><code>configure terminal</code></td></tr>
+            <tr><td>Сохранение конфига</td><td><code>write memory</code></td><td><code>write</code> или <code>wr</code></td></tr>
+            <tr><td>Просмотр интерфейсов</td><td><code>show ip interface brief</code></td><td><code>show interface brief</code></td></tr>
+            <tr><td>Таблица маршрутов</td><td><code>show ip route</code></td><td><code>show ip route</code></td></tr>
+            <tr><td>OSPF-соседи</td><td><code>show ip ospf neighbor</code></td><td><code>show ip ospf neighbor</code></td></tr>
+            <tr><td>Выход из режима</td><td><code>exit</code></td><td><code>exit</code> / <code>end</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 07. Users -->
+    <section id="users">
+      <h2><span class="num">07</span>👤 Создание пользователей</h2>
+
+      <div class="callout success">
+        <span class="icon">🔑</span>
+        <div><strong>Все устройства — Linux</strong>
+          Теперь HQ-RTR и BR-RTR — тоже Linux-машины, поэтому везде используем стандартный <code>useradd</code>. Никаких EcoRouter-специфичных команд нет.
+        </div>
+      </div>
+
+      <h3>HQ-SRV / BR-SRV / HQ-RTR / BR-RTR</h3>
+      <p>Выполнить на каждой машине:</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# useradd -u 2026 sshuser
+[root@hq-rtr ~]# passwd sshuser              # ввести P@ssw0rd
+[root@hq-rtr ~]# usermod -aG wheel sshuser
+[root@hq-rtr ~]# echo "sshuser ALL=(ALL:ALL) NOPASSWD: ALL" >> /etc/sudoers</code></pre>
+
+      <div class="callout note">
+        <span class="icon">📋</span>
+        <div>Повторить те же команды на <strong>BR-RTR</strong>, <strong>HQ-SRV</strong>, <strong>BR-SRV</strong> — меняется только приглашение оболочки.</div>
+      </div>
+    </section>
+
+    <!-- 08. SSH -->
+    <section id="ssh">
+      <h2><span class="num">08</span>🔒 Настройка SSH</h2>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Параметр</th><th>Значение</th></tr></thead>
+          <tbody>
+            <tr><td>Порт</td><td><code>2026</code></td></tr>
+            <tr><td>Разрешённые пользователи</td><td><code>sshuser</code></td></tr>
+            <tr><td>MaxAuthTries</td><td><code>2</code></td></tr>
+            <tr><td>Banner</td><td><code>Authorized access only!</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Выполнить на <strong>каждом Linux-устройстве</strong> (HQ-SRV, BR-SRV, HQ-RTR, BR-RTR):</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# echo "Port 2026"                  >> /etc/openssh/sshd_config
+[root@hq-rtr ~]# echo "AllowUsers sshuser"         >> /etc/openssh/sshd_config
+[root@hq-rtr ~]# echo "MaxAuthTries 2"             >> /etc/openssh/sshd_config
+[root@hq-rtr ~]# echo "Banner /etc/openssh/banner" >> /etc/openssh/sshd_config
+[root@hq-rtr ~]# echo "Authorized access only!" > /etc/openssh/banner
+
+[root@hq-rtr ~]# systemctl restart sshd
+[root@hq-rtr ~]# ssh -p 2026 sshuser@localhost</code></pre>
+    </section>
+
+    <!-- 09. GRE -->
+    <section id="gre">
+      <h2><span class="num">09</span>🛡️ GRE-туннель (Linux ip tunnel)</h2>
+
+      <div class="callout success">
+        <span class="icon">🦓</span>
+        <div><strong>Нет EcoRouter — делаем через Linux kernel + FRR</strong>
+          GRE-туннель создаётся средствами ядра (<code>ip tunnel</code>), сохраняется в <code>/etc/net/ifaces/</code> для автоподнятия при рестарте. IP-адрес туннеля назначается тут же; OSPF запустим поверх него в следующем разделе.
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Конец туннеля</th><th>Адрес</th><th>Local</th><th>Remote</th></tr></thead>
+          <tbody>
+            <tr><td>HQ-RTR</td><td><code>10.10.10.1/30</code></td><td><code>172.16.1.2</code></td><td><code>172.16.2.2</code></td></tr>
+            <tr><td>BR-RTR</td><td><code>10.10.10.2/30</code></td><td><code>172.16.2.2</code></td><td><code>172.16.1.2</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>HQ-RTR — создание GRE в /etc/net/ifaces</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# mkdir -p /etc/net/ifaces/tunnel0
+
+[root@hq-rtr ~]# nano /etc/net/ifaces/tunnel0/options
+<pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">TYPE=iptun
+TUNTYPE=gre
+TUNLOCAL=172.16.1.2
+TUNREMOTE=172.16.2.2
+TTLMODE=fixed
+TTL=255
+BOOTPROTO=static</code></pre>
+
+
+[root@hq-rtr ~]# echo "10.10.10.1/30" > /etc/net/ifaces/tunnel0/ipv4address
+
+[root@hq-rtr ~]# systemctl restart network
+[root@hq-rtr ~]# ip -c a show tunnel0
+[root@hq-rtr ~]# ip link show tunnel0</code></pre>
+
+      <h3>BR-RTR — создание GRE</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-rtr ~]# mkdir -p /etc/net/ifaces/tunnel0
+
+[root@br-rtr ~]# nano /etc/net/ifaces/tunnel0/options
+<pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">TYPE=iptun
+TUNTYPE=gre
+TUNLOCAL=172.16.2.2
+TUNREMOTE=172.16.1.2
+TTLMODE=fixed
+TTL=255
+BOOTPROTO=static</code></pre>
+
+
+[root@br-rtr ~]# echo "10.10.10.2/30" > /etc/net/ifaces/tunnel0/ipv4address
+
+[root@br-rtr ~]# systemctl restart network
+[root@br-rtr ~]# ip -c a show tunnel0</code></pre>
+
+      <h3>Проверка GRE</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash"># С HQ-RTR пинговать другой конец туннеля
+[root@hq-rtr ~]# ping -c3 10.10.10.2</code></pre>
+
+      <div class="callout warn">
+        <span class="icon">⚠️</span>
+        <div><strong>Если ping не проходит</strong>: убедитесь, что <code>ip_forward=1</code> включён на обоих роутерах и на ISP. Проверьте, что enp6s20 (uplink) поднят и доступен: <code>ping 172.16.1.1</code> с HQ-RTR, <code>ping 172.16.2.1</code> с BR-RTR.</div>
+      </div>
+    </section>
+
+    <!-- 10. OSPF -->
+    <section id="ospf">
+      <h2><span class="num">10</span>🔁 OSPF через FRR vtysh</h2>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Параметр</th><th>Значение</th></tr></thead>
+          <tbody>
+            <tr><td>Process ID</td><td><code>1</code> (в FRR — один OSPF-процесс)</td></tr>
+            <tr><td>Area</td><td><code>0</code> (backbone)</td></tr>
+            <tr><td>Аутентификация</td><td>MD5, ключ <code>P@ssw0rd</code> (key id 1)</td></tr>
+            <tr><td>Активный интерфейс</td><td>только <code>tunnel0</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout info">
+        <span class="icon">💡</span>
+        <div><strong>passive-interface default</strong>
+          Делает все интерфейсы «пассивными» (не отправляют Hello), потом конкретные включаем командой <code>no passive-interface tunnel0</code>. Это безопаснее, чем перечислять каждый исключаемый интерфейс.
+        </div>
+      </div>
+
+      <h3>HQ-RTR</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# vtysh</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">hq-rtr# configure terminal
+
+hq-rtr(config)# router ospf
+hq-rtr(config-router)# ospf router-id 10.10.10.1
+hq-rtr(config-router)# passive-interface default
+hq-rtr(config-router)# no passive-interface tunnel0
+
+hq-rtr(config-router)# network 10.10.10.0/30    area 0
+hq-rtr(config-router)# network 192.168.100.0/27 area 0
+hq-rtr(config-router)# network 192.168.200.0/24 area 0
+hq-rtr(config-router)# network 192.168.99.0/29  area 0
+hq-rtr(config-router)# exit
+
+hq-rtr(config)# interface tunnel0
+hq-rtr(config-if)# ip ospf authentication message-digest
+hq-rtr(config-if)# ip ospf message-digest-key 1 md5 P@ssw0rd
+hq-rtr(config-if)# exit
+
+hq-rtr(config)# end
+hq-rtr# write
+hq-rtr# show ip ospf interface brief
+hq-rtr# show ip ospf neighbor</code></pre>
+
+      <h3>BR-RTR</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-rtr ~]# vtysh</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">br-rtr# configure terminal
+
+br-rtr(config)# router ospf
+br-rtr(config-router)# ospf router-id 10.10.10.2
+br-rtr(config-router)# passive-interface default
+br-rtr(config-router)# no passive-interface tunnel0
+
+br-rtr(config-router)# network 192.168.0.0/28 area 0
+br-rtr(config-router)# network 10.10.10.0/30  area 0
+br-rtr(config-router)# exit
+
+br-rtr(config)# interface tunnel0
+br-rtr(config-if)# ip ospf authentication message-digest
+br-rtr(config-if)# ip ospf message-digest-key 1 md5 P@ssw0rd
+br-rtr(config-if)# exit
+
+br-rtr(config)# end
+br-rtr# write
+br-rtr# show ip ospf interface brief
+br-rtr# show ip ospf neighbor</code></pre>
+
+      <h3>Проверка OSPF</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">hq-rtr# show ip ospf neighbor
+Neighbor ID     Pri State         Dead Time Address         Interface
+10.10.10.2        1 Full/DR       00:00:38  10.10.10.2      tunnel0:10.10.10.1
+
+hq-rtr# show ip route ospf
+O>* 192.168.0.0/28 [110/20] via 10.10.10.2, tunnel0</code></pre>
+
+      <div class="callout warn">
+        <span class="icon">⚠️</span>
+        <div><strong>Состояние не Full?</strong> Проверьте: (1) <code>ping 10.10.10.2</code> — GRE работает; (2) MD5-ключи совпадают на обоих концах (чувствительно к регистру!); (3) <code>systemctl status frr</code> — демоны zapfd и ospfd запущены.</div>
+      </div>
+    </section>
+
+    <!-- 11. NAT -->
+    <section id="nat">
+      <h2><span class="num">11</span>🌐 NAT на роутерах (iptables)</h2>
+
+      <div class="callout success">
+        <span class="icon">🦓</span>
+        <div><strong>Вместо EcoRouter NAT</strong> — стандартный Linux <code>iptables MASQUERADE</code> на внешнем интерфейсе. Правила сохраняются в <code>/etc/sysconfig/iptables</code> и восстанавливаются сервисом <code>iptables</code>.</div>
+      </div>
+
+      <h3>HQ-RTR</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash"># MASQUERADE для всех внутренних подсетей через uplink enp6s20
+[root@hq-rtr ~]# iptables -t nat -A POSTROUTING -s 192.168.100.0/27 -o enp6s20 -j MASQUERADE
+[root@hq-rtr ~]# iptables -t nat -A POSTROUTING -s 192.168.200.0/24 -o enp6s20 -j MASQUERADE
+[root@hq-rtr ~]# iptables -t nat -A POSTROUTING -s 192.168.99.0/29  -o enp6s20 -j MASQUERADE
+
+# Туннельный трафик NAT-ить не нужно — он уже инкапсулирован
+# Сохранить и активировать при загрузке
+[root@hq-rtr ~]# iptables-save >> /etc/sysconfig/iptables
+[root@hq-rtr ~]# systemctl enable --now iptables
+
+[root@hq-rtr ~]# iptables -t nat -L -n -v    # проверка</code></pre>
+
+      <h3>BR-RTR</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-rtr ~]# iptables -t nat -A POSTROUTING -s 192.168.0.0/28 -o enp6s20 -j MASQUERADE
+
+[root@br-rtr ~]# iptables-save >> /etc/sysconfig/iptables
+[root@br-rtr ~]# systemctl enable --now iptables
+
+[root@br-rtr ~]# iptables -t nat -L -n -v</code></pre>
+    </section>
+
+    <!-- 12. DHCP -->
+    <section id="dhcp">
+      <h2><span class="num">12</span>📡 DHCP на VLAN 200 (ISC DHCP)</h2>
+
+      <div class="callout success">
+        <span class="icon">🦓</span>
+        <div><strong>Вместо встроенного DHCP EcoRouter</strong> — используем <code>dhcp-server</code> (ISC DHCP) непосредственно на HQ-RTR.</div>
+      </div>
+
+      <h3>Параметры пула</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Параметр</th><th>Значение</th></tr></thead>
+          <tbody>
+            <tr><td>Pool</td><td><code>192.168.200.2 – 192.168.200.254</code></td></tr>
+            <tr><td>Маска</td><td><code>/24</code></td></tr>
+            <tr><td>Шлюз</td><td><code>192.168.200.1</code></td></tr>
+            <tr><td>DNS</td><td><code>192.168.100.2</code> (HQ-SRV)</td></tr>
+            <tr><td>Domain</td><td><code>au-team.irpo</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>HQ-RTR — установка и настройка</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# apt-get update && apt-get install -y dhcp-server</code></pre>
+
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# nano /etc/dhcp/dhcpd.conf</code></pre>
+<pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">default-lease-time 600;
+max-lease-time 7200;
+authoritative;
+
+subnet 192.168.200.0 netmask 255.255.255.0 {
+    range 192.168.200.2 192.168.200.254;
+    option routers 192.168.200.1;
+    option domain-name-servers 192.168.100.2;
+    option domain-name "au-team.irpo";
+}</code></pre>
+
+
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">default-lease-time 600;
+max-lease-time 7200;
+authoritative;
+
+subnet 192.168.200.0 netmask 255.255.255.0 {
+    range 192.168.200.2 192.168.200.254;
+    option routers 192.168.200.1;
+    option domain-name-servers 192.168.100.2;
+    option domain-name "au-team.irpo";
+}</code></pre>
+
+      <p>Указать интерфейс, на котором слушает DHCP-сервер:</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# nano /etc/sysconfig/dhcpd</code></pre>
+<p>Найти строку <code>DHCPDARGS</code> и заменить:</p>
+<pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">diff</span></div><code class="language-diff">- DHCPDARGS=
++ DHCPDARGS="enp6s21.200"</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">diff</span></div><code class="language-diff">- DHCPDARGS=
++ DHCPDARGS="enp6s21.200"</code></pre>
+
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# systemctl enable --now dhcpd
+[root@hq-rtr ~]# systemctl status dhcpd</code></pre>
+
+      <h3>Проверка</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash"># На HQ-CLI
+[stud@hq-cli ~]$ ip -c a                  # 192.168.200.x/24
+[stud@hq-cli ~]$ ip route                 # default via 192.168.200.1
+[stud@hq-cli ~]$ cat /etc/resolv.conf     # nameserver 192.168.100.2
+
+# На HQ-RTR — просмотр выданных аренд
+[root@hq-rtr ~]# cat /var/lib/dhcpd/dhcpd.leases</code></pre>
+    </section>
+
+    <!-- 13. DNS -->
+    <section id="dns">
+      <h2><span class="num">13</span>🌐 DNS-сервер (BIND) на HQ-SRV</h2>
+
+      <p>Этот раздел <strong>не изменился</strong> — BIND ставится на HQ-SRV, который работает на ALT Linux и не зависит от типа роутеров.</p>
+
+      <h3>Таблица записей</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Устройство</th><th>FQDN</th><th>Тип</th><th>Адрес</th></tr></thead>
+          <tbody>
+            <tr><td>HQ-RTR</td><td><code>hq-rtr.au-team.irpo</code></td><td>A, PTR</td><td><code>192.168.100.1</code> · <code>192.168.200.1</code> · <code>192.168.99.1</code></td></tr>
+            <tr><td>BR-RTR</td><td><code>br-rtr.au-team.irpo</code></td><td>A</td><td><code>192.168.0.1</code></td></tr>
+            <tr><td>HQ-SRV</td><td><code>hq-srv.au-team.irpo</code></td><td>A, PTR</td><td><code>192.168.100.2</code></td></tr>
+            <tr><td>HQ-CLI</td><td><code>hq-cli.au-team.irpo</code></td><td>A, PTR</td><td><code>192.168.200.2</code></td></tr>
+            <tr><td>BR-SRV</td><td><code>br-srv.au-team.irpo</code></td><td>A</td><td><code>192.168.0.2</code></td></tr>
+            <tr><td>docker</td><td><code>docker.au-team.irpo</code></td><td>A</td><td><code>172.16.1.1</code></td></tr>
+            <tr><td>web</td><td><code>web.au-team.irpo</code></td><td>A</td><td><code>172.16.2.1</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Установка BIND</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# apt-get update && apt-get install -y bind bind-utils</code></pre>
+
+      <h3>options.conf</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# nano /var/lib/bind/etc/options.conf</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">diff</span></div><code class="language-diff">- listen-on    { 127.0.0.1; };
++ listen-on    { 192.168.100.2; };
+
+- forwarders   { };
++ forwarders   { 95.167.167.95; };
+
+- allow-query  { localhost; };
++ allow-query  { any; };</code></pre>
+
+      <h3>rfc1912.conf — добавить зоны</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# nano /var/lib/bind/etc/rfc1912.conf</code></pre>
+      <p>Добавить в конец:</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">zone "au-team.irpo" {
+    type master;
+    file "au-team.irpo";
+};
+
+zone "100.168.192.in-addr.arpa" {
+    type master;
+    file "100.168.192.in-addr.arpa";
+};
+
+zone "200.168.192.in-addr.arpa" {
+    type master;
+    file "200.168.192.in-addr.arpa";
+};</code></pre>
+
+      <h3>Создание файлов зон</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# cp /var/lib/bind/etc/zone/empty /var/lib/bind/etc/zone/au-team.irpo
+[root@hq-srv ~]# cp /var/lib/bind/etc/zone/empty /var/lib/bind/etc/zone/100.168.192.in-addr.arpa
+[root@hq-srv ~]# cp /var/lib/bind/etc/zone/empty /var/lib/bind/etc/zone/200.168.192.in-addr.arpa</code></pre>
+
+      <h3>Прямая зона au-team.irpo</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# nano /var/lib/bind/etc/zone/au-team.irpo</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">$TTL    1D
+@       IN  SOA     au-team.irpo. root.au-team.irpo. (
+                                2025062300  ; serial
+                                12H         ; refresh
+                                1H          ; retry
+                                1W          ; expire
+                                1H          ; ncache
+                                )
+        IN  NS      au-team.irpo.
+@       IN  A       192.168.100.2
+hq-srv  IN  A       192.168.100.2
+hq-cli  IN  A       192.168.200.2
+hq-rtr  IN  A       192.168.100.1
+hq-rtr  IN  A       192.168.200.1
+hq-rtr  IN  A       192.168.99.1
+docker  IN  A       172.16.1.1
+web     IN  A       172.16.2.1
+br-srv  IN  A       192.168.0.2
+br-rtr  IN  A       192.168.0.1</code></pre>
+
+      <h3>Обратные зоны</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# nano /var/lib/bind/etc/zone/100.168.192.in-addr.arpa</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">$TTL    1D
+@   IN  SOA au-team.irpo. root.au-team.irpo. (2025062300 12H 1H 1W 1H)
+    IN  NS  au-team.irpo.
+1   IN  PTR hq-rtr.au-team.irpo.
+2   IN  PTR hq-srv.au-team.irpo.</code></pre>
+
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# nano /var/lib/bind/etc/zone/200.168.192.in-addr.arpa</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">$TTL    1D
+@   IN  SOA au-team.irpo. root.au-team.irpo. (2025062300 12H 1H 1W 1H)
+    IN  NS  au-team.irpo.
+1   IN  PTR hq-rtr.au-team.irpo.
+2   IN  PTR hq-cli.au-team.irpo.</code></pre>
+
+      <h3>Запуск и проверка</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# chown -R root:named /etc/bind/zone/*
+[root@hq-srv ~]# named-checkconf -z           # все зоны: loaded
+[root@hq-srv ~]# systemctl enable --now bind
+[root@hq-srv ~]# systemctl status bind
+
+# Тест с HQ-CLI
+[stud@hq-cli ~]$ host hq-srv.au-team.irpo
+[stud@hq-cli ~]$ host 192.168.100.2</code></pre>
+    </section>
+
+    <!-- 14. Timezone -->
+    <section id="tz">
+      <h2><span class="num">14</span>🕒 Часовой пояс</h2>
+
+      <div class="callout success">
+        <span class="icon">🦓</span>
+        <div><strong>Все устройства — Linux</strong>, поэтому везде используем <code>timedatectl</code>. Нет EcoRouter-специфичного <code>ntp timezone</code>.</div>
+      </div>
+
+      <p>Выполнить на <strong>всех машинах</strong> (ISP, HQ-RTR, BR-RTR, HQ-SRV, BR-SRV, HQ-CLI):</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# timedatectl set-timezone Europe/Samara
+[root@hq-rtr ~]# timedatectl</code></pre>
+
+      <div class="callout info">
+        <span class="icon">💡</span>
+        <div>Если нет нужных зон — установить пакет: <code>apt-get install -y tzdata</code></div>
+      </div>
+    </section>
+
+    <!-- End Module 1 -->
+    <div class="module-end">конец модуля 1</div>
+
+    <!-- Module 2 -->
+    <div class="module-banner" id="module-2">
+      <span class="badge">Модуль 2</span>
+      <div>
+        <div class="title">Сервисы и аутентификация</div>
+        <div class="subtitle">Samba DC, RAID, NFS, NTP, Ansible, Docker</div>
+      </div>
+    </div>
+
+    <!-- 15. Samba DC -->
+    <section id="samba-dc">
+      <h2><span class="num">15</span>🏛️ Контроллер домена Samba DC на BR-SRV</h2>
+      <p>Этот раздел не изменился — Samba DC ставится на BR-SRV (ALT Linux), не зависит от типа роутеров.</p>
+
+      <h3>1. Установка</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-srv ~]# apt-get update && apt-get install -y task-samba-dc</code></pre>
+
+      <h3>2. Остановить конфликтующие службы</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-srv ~]# for s in smb nmb krb5kdc slapd bind; do
+                     systemctl disable --now "$s" 2>/dev/null || true
+                 done</code></pre>
+
+      <h3>3. Очистка</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-srv ~]# rm -f /etc/samba/smb.conf
+[root@br-srv ~]# rm -rf /var/lib/samba /var/cache/samba
+[root@br-srv ~]# mkdir -p /var/lib/samba/sysvol</code></pre>
+
+      <h3>4. Развёртывание домена</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-srv ~]# samba-tool domain provision</code></pre>
+      <ul>
+        <li>Все вопросы кроме пароля — <kbd>Enter</kbd>.</li>
+        <li>DNS forwarder — <code>192.168.100.2</code>.</li>
+        <li>Administrator password — <code>P@ssw0rd</code> (мин. 7 символов, 3 группы).</li>
+      </ul>
+
+      <h3>5. Kerberos и запуск</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-srv ~]# cp /var/lib/samba/private/krb5.conf /etc/krb5.conf
+[root@br-srv ~]# systemctl enable --now samba</code></pre>
+
+      <h3>6. resolv.conf</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-srv ~]# nano /etc/net/ifaces/ens19/resolv.conf
+<pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">search au-team.irpo
+nameserver 127.0.0.1</code></pre>
+
+[root@br-srv ~]# systemctl restart network</code></pre>
+
+      <h3>7. Группа hq и пользователи hquser1–5</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-srv ~]# samba-tool group add hq
+
+[root@br-srv ~]# for i in {1..5}; do
+                     samba-tool user add hquser$i 'P@ssw0rd';
+                     samba-tool user setexpiry hquser$i --noexpiry;
+                     samba-tool group addmembers hq hquser$i;
+                 done
+
+[root@br-srv ~]# samba-tool group listmembers hq</code></pre>
+    </section>
+
+    <!-- 16. RAID -->
+    <section id="raid">
+      <h2><span class="num">16</span>💾 RAID 0 на HQ-SRV</h2>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# apt-get install -y mdadm
+[root@hq-srv ~]# lsblk                        # определить sdb, sdc
+[root@hq-srv ~]# mdadm --zero-superblock --force /dev/sdb /dev/sdc
+[root@hq-srv ~]# mdadm --create /dev/md0 --level=0 --raid-devices=2 /dev/sdb /dev/sdc
+[root@hq-srv ~]# mkfs.ext4 /dev/md0
+[root@hq-srv ~]# mkdir -p /raid
+[root@hq-srv ~]# echo "/dev/md0 /raid ext4 defaults 0 0" >> /etc/fstab
+[root@hq-srv ~]# mount -a
+[root@hq-srv ~]# mdadm --detail --scan >> /etc/mdadm.conf
+[root@hq-srv ~]# df -h /raid</code></pre>
+    </section>
+
+    <!-- 17. NFS -->
+    <section id="nfs">
+      <h2><span class="num">17</span>📂 NFS: HQ-SRV ↔ HQ-CLI</h2>
+
+      <h3>HQ-SRV — сервер</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# apt-get install -y nfs-server
+[root@hq-srv ~]# mkdir -p /raid/nfs
+[root@hq-srv ~]# echo "/raid/nfs 192.168.200.0/24(rw,sync,no_subtree_check)" >> /etc/exports
+[root@hq-srv ~]# systemctl enable --now nfs-server
+[root@hq-srv ~]# exportfs -arv</code></pre>
+
+      <h3>HQ-CLI — клиент</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[stud@hq-cli ~]$ sudo apt-get install -y nfs-utils
+[stud@hq-cli ~]$ sudo mkdir -p /mnt/nfs
+[stud@hq-cli ~]$ sudo mount 192.168.100.2:/raid/nfs /mnt/nfs
+[stud@hq-cli ~]$ df -h /mnt/nfs</code></pre>
+    </section>
+
+    <!-- 18. NTP -->
+    <section id="chrony">
+      <h2><span class="num">18</span>⏱️ NTP (chrony) на ISP</h2>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@isp ~]# apt-get install -y chrony
+[root@isp ~]# nano /etc/chrony.conf</code></pre>
+      <p>Добавить:</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">allow 172.16.0.0/12
+allow 192.168.0.0/16</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@isp ~]# systemctl enable --now chronyd
+[root@isp ~]# chronyc sources</code></pre>
+
+      <p>На остальных машинах добавить ISP как NTP-источник:</p>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash"># Пример для HQ-SRV (аналогично на других)
+[root@hq-srv ~]# apt-get install -y chrony
+[root@hq-srv ~]# echo "server 172.16.1.1 iburst" >> /etc/chrony.conf
+[root@hq-srv ~]# systemctl enable --now chronyd
+[root@hq-srv ~]# chronyc tracking</code></pre>
+    </section>
+
+    <!-- 19. Ansible -->
+    <section id="ansible">
+      <h2><span class="num">19</span>🤖 Ansible на BR-SRV</h2>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-srv ~]# apt-get install -y ansible
+
+# Инвентарь
+[root@br-srv ~]# mkdir -p /etc/ansible
+[root@br-srv ~]# nano /etc/ansible/hosts</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">[hq]
+hq-srv.au-team.irpo ansible_port=2026 ansible_user=sshuser
+
+[br]
+br-rtr.au-team.irpo ansible_port=2026 ansible_user=sshuser
+
+[routers]
+hq-rtr.au-team.irpo ansible_port=2026 ansible_user=sshuser
+br-rtr.au-team.irpo ansible_port=2026 ansible_user=sshuser</code></pre>
+
+      <div class="callout info">
+        <span class="icon">💡</span>
+        <div><strong>Роутеры в Ansible</strong> — теперь HQ-RTR и BR-RTR тоже Linux-машины, поэтому ими управляет Ansible как обычными Linux-хостами, а не через сетевой модуль. Плейбуки пишутся стандартно.</div>
+      </div>
+
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash"># SSH-ключ для беспарольного доступа
+[root@br-srv ~]# ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519 -N ""
+[root@br-srv ~]# ssh-copy-id -p 2026 -i ~/.ssh/id_ed25519.pub sshuser@hq-srv.au-team.irpo
+
+# Проверка
+[root@br-srv ~]# ansible all -m ping</code></pre>
+    </section>
+
+    <!-- 20. Docker -->
+    <section id="docker">
+      <h2><span class="num">20</span>🐳 Docker на BR-SRV</h2>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-srv ~]# apt-get install -y docker-engine docker-compose
+[root@br-srv ~]# systemctl enable --now docker
+[root@br-srv ~]# docker run hello-world</code></pre>
+    </section>
+
+    <!-- FRR cheatsheet -->
+    <section id="frr-cheatsheet" style="margin-top: 32px;">
+      <h2><span class="num">★</span>🦓 Шпаргалка FRR vtysh</h2>
+
+      <h3>Диагностика OSPF</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Команда</th><th>Что показывает</th></tr></thead>
+          <tbody>
+            <tr><td><code>show ip ospf neighbor</code></td><td>Список OSPF-соседей и их состояние</td></tr>
+            <tr><td><code>show ip ospf interface tunnel0</code></td><td>Параметры OSPF на туннеле (auth, hello timer)</td></tr>
+            <tr><td><code>show ip ospf database</code></td><td>LSDB — база данных топологии</td></tr>
+            <tr><td><code>show ip route ospf</code></td><td>Маршруты, полученные по OSPF</td></tr>
+            <tr><td><code>show ip route</code></td><td>Полная таблица маршрутизации</td></tr>
+            <tr><td><code>debug ospf packet all</code></td><td>Дебаг OSPF-пакетов (выключить: <code>no debug all</code>)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Диагностика GRE</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Команда</th><th>Что делает</th></tr></thead>
+          <tbody>
+            <tr><td><code>ip -c a show tunnel0</code></td><td>Адрес и состояние туннеля</td></tr>
+            <tr><td><code>ip link show tunnel0</code></td><td>UP/DOWN, MTU, режим gre</td></tr>
+            <tr><td><code>ping 10.10.10.2</code></td><td>Связность через GRE</td></tr>
+            <tr><td><code>tcpdump -i enp6s20 proto gre</code></td><td>Перехват GRE-пакетов на uplink</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Сохранение конфига FRR</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">hq-rtr# write
+Building Configuration...
+Configuration saved to /etc/frr/frr.conf</code></pre>
+
+      <div class="callout warn">
+        <span class="icon">⚠️</span>
+        <div><strong>После reboot</strong> — FRR поднимается автоматически через systemd (<code>frr.service</code>), конфиг читается из <code>/etc/frr/frr.conf</code>. GRE-туннель поднимается через <code>systemctl restart network</code> (конфиг в <code>/etc/net/ifaces/tunnel0/</code>).</div>
+      </div>
+    </section>
+
+  
+    <!-- ===== Модуль 3: Дополнительные сервисы ===== -->
+    <div class="module-banner" id="module-3">
+      <span class="badge">Модуль 3</span>
+      <div>
+        <div class="title">Дополнительные сервисы</div>
+        <div class="subtitle">Статический NAT, Nginx, Web-аутентификация, Яндекс Браузер</div>
+      </div>
+    </div>
+
+    <!-- 21. Статический NAT (DNAT) -->
+    <section id="static-nat">
+      <h2><span class="num">21</span>🔀 Статический NAT (DNAT) через iptables</h2>
+
+      <p>Статический NAT (DNAT) позволяет пробросить внешний порт на внутренний сервер. Здесь — проброс порта <strong>80</strong> с внешнего интерфейса ISP до HQ-SRV (или BR-SRV) через роутер.</p>
+
+      <div class="callout info">
+        <span class="icon">💡</span>
+        <div><strong>Вместо EcoRouter static NAT</strong>
+          В EcoRouter использовалось <code>ip nat source static</code>. На Linux делаем то же самое через <code>iptables -t nat -A PREROUTING ... -j DNAT</code>.
+        </div>
+      </div>
+
+      <h3>Пример: проброс TCP/80 с ISP → HQ-SRV (192.168.100.2)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Параметр</th><th>Значение</th></tr></thead>
+          <tbody>
+            <tr><td>Внешний IP (HQ-RTR uplink)</td><td><code>172.16.1.2</code></td></tr>
+            <tr><td>Внешний порт</td><td><code>80</code></td></tr>
+            <tr><td>Внутренний IP (HQ-SRV)</td><td><code>192.168.100.2</code></td></tr>
+            <tr><td>Внутренний порт</td><td><code>80</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>HQ-RTR</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash"># DNAT: входящий трафик на 172.16.1.2:80 → HQ-SRV:80
+[root@hq-rtr ~]# iptables -t nat -A PREROUTING -i enp6s20 -p tcp --dport 80 -j DNAT --to-destination 192.168.100.2:80
+
+# Разрешить форвардинг к HQ-SRV
+[root@hq-rtr ~]# iptables -A FORWARD -p tcp -d 192.168.100.2 --dport 80 -j ACCEPT
+
+# Сохранить
+[root@hq-rtr ~]# iptables-save >> /etc/sysconfig/iptables
+[root@hq-rtr ~]# systemctl restart iptables
+
+# Проверка
+[root@hq-rtr ~]# iptables -t nat -L PREROUTING -n -v</code></pre>
+
+      <h3>Аналогично для BR-RTR → BR-SRV</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-rtr ~]# iptables -t nat -A PREROUTING -i enp6s20 -p tcp --dport 80 -j DNAT --to-destination 192.168.0.2:80
+[root@br-rtr ~]# iptables -A FORWARD -p tcp -d 192.168.0.2 --dport 80 -j ACCEPT
+[root@br-rtr ~]# iptables-save >> /etc/sysconfig/iptables
+[root@br-rtr ~]# systemctl restart iptables</code></pre>
+
+      <h3>Проверка с ISP</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@isp ~]# curl -I http://172.16.1.2    # должен ответить HQ-SRV (nginx)
+[root@isp ~]# curl -I http://172.16.2.2    # должен ответить BR-SRV</code></pre>
+    </section>
+
+    <!-- 22. Nginx -->
+    <section id="nginx-setup">
+      <h2><span class="num">22</span>🌐 Настройка Nginx</h2>
+
+      <p>Nginx устанавливается на <strong>HQ-SRV</strong> (и/или BR-SRV). Используется как веб-сервер и/или обратный прокси.</p>
+
+      <h3>HQ-SRV — установка и запуск</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# apt-get update && apt-get install -y nginx
+[root@hq-srv ~]# systemctl enable --now nginx
+[root@hq-srv ~]# systemctl status nginx</code></pre>
+
+      <h3>Конфигурация виртуального хоста</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# nano /etc/nginx/conf.d/hq-srv.conf</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-plaintext">server {
+    listen 80;
+    server_name hq-srv.au-team.irpo web.au-team.irpo;
+
+    root /var/www/html;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}</code></pre>
+
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# mkdir -p /var/www/html
+[root@hq-srv ~]# echo "&lt;h1&gt;HQ-SRV au-team.irpo&lt;/h1&gt;" > /var/www/html/index.html
+[root@hq-srv ~]# nginx -t             # проверка конфигурации
+[root@hq-srv ~]# systemctl reload nginx</code></pre>
+
+      <h3>Проверка</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# curl -s http://localhost | head -5
+[stud@hq-cli ~]$ curl -s http://web.au-team.irpo</code></pre>
+    </section>
+
+    <!-- 23. Web-аутентификация -->
+    <section id="web-auth">
+      <h2><span class="num">23</span>🔐 Web-аутентификация (nginx auth_basic)</h2>
+
+      <p>Защита веб-ресурса HTTP Basic Auth через <code>htpasswd</code>. Реализуется на <strong>HQ-SRV</strong> в конфигурации nginx.</p>
+
+      <h3>1. Создание файла паролей</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# apt-get install -y apache2-utils   # для htpasswd
+[root@hq-srv ~]# htpasswd -c /etc/nginx/.htpasswd sshuser
+# ввести P@ssw0rd
+
+[root@hq-srv ~]# cat /etc/nginx/.htpasswd
+sshuser:$apr1$...</code></pre>
+
+      <h3>2. Добавить auth в конфиг nginx</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# nano /etc/nginx/conf.d/hq-srv.conf</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">diff</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-diff">   location / {
++      auth_basic "Restricted Area";
++      auth_basic_user_file /etc/nginx/.htpasswd;
+       try_files $uri $uri/ =404;
+   }</code></pre>
+
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# nginx -t && systemctl reload nginx</code></pre>
+
+      <h3>3. Проверка</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash"># Без пароля — 401
+[stud@hq-cli ~]$ curl -s -o /dev/null -w "%{http_code}" http://web.au-team.irpo
+401
+
+# С паролем — 200
+[stud@hq-cli ~]$ curl -s -o /dev/null -w "%{http_code}" -u sshuser:P@ssw0rd http://web.au-team.irpo
+200</code></pre>
+    </section>
+
+    <!-- 24. Яндекс Браузер -->
+    <section id="yandex-browser">
+      <h2><span class="num">24</span>🌐 Установка Яндекс Браузера на HQ-CLI</h2>
+
+      <p>Яндекс Браузер устанавливается на рабочую станцию <strong>HQ-CLI</strong> (ALT Workstation).</p>
+
+      <div class="callout info">
+        <span class="icon">💡</span>
+        <div><strong>Пакет в репозитории ALT</strong>
+          В ALT Linux Яндекс Браузер доступен в репозитории Sisyphus или может быть установлен из RPM-пакета с официального сайта.
+        </div>
+      </div>
+
+      <h3>Вариант 1: через apt-get (если пакет есть в репо)</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[stud@hq-cli ~]$ sudo apt-get update
+[stud@hq-cli ~]$ sudo apt-get install -y yandex-browser-stable</code></pre>
+
+      <h3>Вариант 2: ручная установка RPM</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash"># Скачать пакет (если есть интернет)
+[stud@hq-cli ~]$ wget https://browser.yandex.ru/download/?os=linux -O yandex-browser.rpm
+
+# Установить
+[stud@hq-cli ~]$ sudo rpm -i yandex-browser.rpm
+
+# Или через apt
+[stud@hq-cli ~]$ sudo apt-get install -y ./yandex-browser.rpm</code></pre>
+
+      <h3>Проверка</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[stud@hq-cli ~]$ yandex-browser --version
+# Запуск из меню приложений → Интернет → Яндекс Браузер</code></pre>
+
+      <div class="callout note">
+        <span class="icon">📋</span>
+        <div><strong>После установки</strong>
+          Открыть браузер, перейти по адресу <code>http://web.au-team.irpo</code> — должна появиться форма Basic Auth (раздел 23).
+        </div>
+      </div>
+    </section>
+
+
+  </main>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('pre code').forEach(el => {
+      hljs.highlightElement(el);
+    });
+  });
+
+  function copyCode(btn) {
+    const pre = btn.closest('.code-header').nextElementSibling;
+    const text = pre ? pre.textContent : '';
+    navigator.clipboard.writeText(text.trim()).then(() => {
+      btn.textContent = 'copied!';
+      btn.style.color = 'var(--green)';
+      setTimeout(() => { btn.textContent = 'copy'; btn.style.color = ''; }, 1500);
+    });
+  }
+
+  // Active TOC highlight
+  const sections = document.querySelectorAll('section[id]');
+  const tocLinks = document.querySelectorAll('aside.toc a');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        tocLinks.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`aside.toc a[href="#${e.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
