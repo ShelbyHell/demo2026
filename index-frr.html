@@ -690,12 +690,11 @@ hq-rtr# show ip ospf neighbor</code></pre>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">br-rtr# configure terminal
 
 br-rtr(config)# router ospf
-br-rtr(config-router)# ospf router-id 10.10.10.2
 br-rtr(config-router)# passive-interface default
 br-rtr(config-router)# no passive-interface tunnel0
 
-hq-rtr(config-router)# network 172.16.2.0/28 area 0
-br-rtr(config-router)# network 10.10.10.0/30  area 0
+br-rtr(config-router)# network 172.16.2.0/28 area 0
+br-rtr(config-router)# network 192.168.0.0/28  area 0
 br-rtr(config-router)# exit
 
 br-rtr(config)# end
