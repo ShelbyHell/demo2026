@@ -249,12 +249,12 @@
       </div>
 
       <h3>ISP</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@stendssa ~]# hostnamectl set-hostname isp; bash
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@stendssa ~]# hostnamectl set-hostname isp
 [root@isp ~]#</code></pre>
 
       <h3>HQ-RTR (ALT Linux)</h3>
       <h4>Hostname и IP-форвардинг</h4>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@alt ~]# hostnamectl set-hostname hq-rtr.au-team.irpo; bash
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@alt ~]# hostnamectl set-hostname hq-rtr.au-team.irpo
 
 # Включить IP-форвардинг
 [root@hq-rtr ~]# nano /etc/net/sysctl.conf</code></pre>
@@ -317,7 +317,7 @@ HOST=enp6s21</code></pre>
 
       <h3>BR-RTR (ALT Linux)</h3>
       <h4>Hostname и IP-форвардинг</h4>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@alt ~]# hostnamectl set-hostname br-rtr.au-team.irpo; bash
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@alt ~]# hostnamectl set-hostname br-rtr.au-team.irpo
 
 [root@br-rtr ~]# nano /etc/net/sysctl.conf</code></pre>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">diff</span></div><code class="language-diff">- net.ipv4.ip_forward = 0
@@ -343,7 +343,7 @@ HOST=enp6s21</code></pre>
 [root@br-rtr ~]# ip -c a</code></pre>
 
       <h3>HQ-SRV</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@alt ~]# hostnamectl set-hostname hq-srv.au-team.irpo; bash
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@alt ~]# hostnamectl set-hostname hq-srv.au-team.irpo
 
 [root@hq-srv ~]# echo "192.168.100.2/27" > /etc/net/ifaces/ens19/ipv4address
 [root@hq-srv ~]# echo "default via 192.168.100.1" > /etc/net/ifaces/ens19/ipv4route
@@ -353,7 +353,7 @@ HOST=enp6s21</code></pre>
 [root@hq-srv ~]# ip -c a</code></pre>
 
       <h3>BR-SRV</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@alt ~]# hostnamectl set-hostname br-srv.au-team.irpo; bash
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@alt ~]# hostnamectl set-hostname br-srv.au-team.irpo
 
 [root@br-srv ~]# echo "192.168.0.2/28" > /etc/net/ifaces/ens19/ipv4address
 [root@br-srv ~]# echo "default via 192.168.0.1" > /etc/net/ifaces/ens19/ipv4route
