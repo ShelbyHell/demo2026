@@ -582,7 +582,6 @@ hq-rtr# show version</code></pre>
 
       <h3>HQ-RTR — создание GRE в /etc/net/ifaces</h3>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# mkdir -p /etc/net/ifaces/tunnel0
-
 [root@hq-rtr ~]# nano /etc/net/ifaces/tunnel0/options</code></pre>
 Вносим в файл следующее содержимое:
 <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang"></span></div><code class="language-plaintext">TYPE=iptun
@@ -613,8 +612,7 @@ TTL=255
 BOOTPROTO=static</code></pre>
 
 
-[root@br-rtr ~]# echo "10.10.10.2/30" > /etc/net/ifaces/tunnel0/ipv4address
-
+<pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang"></span></div><code class="language-plaintext">[root@br-rtr ~]# echo "10.10.10.2/30" > /etc/net/ifaces/tunnel0/ipv4address
 [root@br-rtr ~]# systemctl restart network
 [root@br-rtr ~]# ip -c a show tunnel0</code></pre>
 
