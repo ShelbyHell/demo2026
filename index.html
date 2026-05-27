@@ -407,23 +407,6 @@ HOST=ens21</code></pre>
 [root@isp ~]# iptables -t nat -L -n -v    # проверка</code></pre>
     </section>
 
-    <!-- 05. Uplinks -->
-    <section id="uplinks">
-      <h2><span class="num">05</span>🔌 Проверка связи роутеров с ISP</h2>
-
-      <p>К этому моменту uplink-адреса уже прописаны (раздел 03). Проверяем связь:</p>
-
-      <h3>HQ-RTR</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# ping -c3 172.16.1.1    # ISP
-[root@hq-rtr ~]# ping -c3 ya.ru       # интернет через ISP NAT
-[root@hq-rtr ~]# ip route</code></pre>
-
-      <h3>BR-RTR</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-rtr ~]# ping -c3 172.16.2.1
-[root@br-rtr ~]# ping -c3 ya.ru
-[root@br-rtr ~]# ip route</code></pre>
-    </section>
-
     <!-- 11. NAT -->
     <section id="nat">
       <h2><span class="num">11</span>🌐 NAT на роутерах (iptables)</h2>
@@ -455,6 +438,23 @@ HOST=ens21</code></pre>
 [root@br-rtr ~]# iptables -t nat -L -n -v</code></pre>
     </section>
 
+    <!-- 05. Uplinks -->
+    <section id="uplinks">
+      <h2><span class="num">05</span>🔌 Проверка связи роутеров с ISP</h2>
+
+      <p>К этому моменту uplink-адреса уже прописаны (раздел 03). Проверяем связь:</p>
+
+      <h3>HQ-RTR</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# ping -c3 172.16.1.1    # ISP
+[root@hq-rtr ~]# ping -c3 ya.ru       # интернет через ISP NAT
+[root@hq-rtr ~]# ip route</code></pre>
+
+      <h3>BR-RTR</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-rtr ~]# ping -c3 172.16.2.1
+[root@br-rtr ~]# ping -c3 ya.ru
+[root@br-rtr ~]# ip route</code></pre>
+    </section>
+    
     <!-- 06. FRR Install -->
     <section id="frr-install">
       <h2><span class="num">06</span>🦓 Установка и настройка FRR</h2>
