@@ -265,7 +265,7 @@
 
       <h4>Uplink-интерфейс (ens20 — сторона ISP)</h4>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-rtr ~]# echo "172.16.1.2/28" > /etc/net/ifaces/ens20/ipv4address
-[root@br-rtr ~]# echo "nameserver 95.167.167.95" > /etc/net/ifaces/ens20/resolv.conf
+[root@hq-rtr ~]# echo "nameserver 95.167.167.95" > /etc/net/ifaces/ens20/resolv.conf
 [root@hq-rtr ~]# echo "default via 172.16.1.1" > /etc/net/ifaces/ens20/ipv4route</code></pre>
 
       <h4>Настройка работы интерфейсов</h4>
@@ -581,15 +581,12 @@ HOST=ens21</code></pre>
 TUNTYPE=gre
 TUNLOCAL=172.16.1.2
 TUNREMOTE=172.16.2.2
-TTLMODE=fixed
-TTL=255
 BOOTPROTO=static</code></pre>
 Сохраняем (Ctrl-S, Ctrl-X), и пишем следующее
 <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang"></span></div><code class="language-plaintext">[root@hq-rtr ~]# echo "10.10.10.1/30" > /etc/net/ifaces/tunnel0/ipv4address</code></pre>
 
 <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang"></span></div><code class="language-plaintext">[root@hq-rtr ~]# systemctl restart network
-[root@hq-rtr ~]# ip -c a show tunnel0
-[root@hq-rtr ~]# ip link show tunnel0</code></pre>
+[root@hq-rtr ~]# ip -c a</code></pre>
 
       <h3>BR-RTR — создание GRE</h3>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@br-rtr ~]# mkdir -p /etc/net/ifaces/tunnel0
@@ -599,13 +596,11 @@ BOOTPROTO=static</code></pre>
 TUNTYPE=gre
 TUNLOCAL=172.16.2.2
 TUNREMOTE=172.16.1.2
-TTLMODE=fixed
-TTL=255
 BOOTPROTO=static</code></pre>
 Сохраняем (Ctrl-S, Ctrl-X), и пишем следующее
 <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang"></span></div><code class="language-plaintext">[root@br-rtr ~]# echo "10.10.10.2/30" > /etc/net/ifaces/tunnel0/ipv4address
 [root@br-rtr ~]# systemctl restart network
-[root@br-rtr ~]# ip -c a show tunnel0</code></pre>
+[root@br-rtr ~]# ip -c a</code></pre>
 
       <h3>Проверка GRE</h3>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash"># С HQ-RTR пинговать другой конец туннеля
@@ -694,7 +689,7 @@ br-rtr# show ip ospf neighbor
 br-rtr# exit
 [root@br-rtr]# systemctl restart frr</code></pre>
 
-      <h3>Проверка OSPF</h3>
+      <h3>Проверка OSPF (ПРОВЕРКА ПРИМЕРНАЯ!!!!)</h3>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">hq-rtr# show ip ospf neighbor
 Neighbor ID     Pri State         Dead Time Address         Interface
 10.10.10.2        1 Full/DR       00:00:38  10.10.10.2      tunnel0:10.10.10.1
@@ -732,8 +727,7 @@ O>* 192.168.0.0/28 [110/20] via 10.10.10.2, tunnel0</code></pre>
         <table>
           <thead><tr><th>Команда</th><th>Что делает</th></tr></thead>
           <tbody>
-            <tr><td><code>ip -c a show tunnel0</code></td><td>Адрес и состояние туннеля</td></tr>
-            <tr><td><code>ip link show tunnel0</code></td><td>UP/DOWN, MTU, режим gre</td></tr>
+            <tr><td><code>ip -c a</code></td><td>Адрес и состояние туннеля</td></tr>
             <tr><td><code>ping 10.10.10.2</code></td><td>Связность через GRE</td></tr>
             <tr><td><code>tcpdump -i ens20 proto gre</code></td><td>Перехват GRE-пакетов на uplink</td></tr>
           </tbody>
