@@ -708,6 +708,49 @@ O>* 192.168.0.0/28 [110/20] via 10.10.10.2, tunnel0</code></pre>
       </div>
     </section>
 
+    <!-- FRR cheatsheet -->
+    <section id="frr-cheatsheet" style="margin-top: 32px;">
+      <h2><span class="num">★</span>🦓 Шпаргалка FRR vtysh</h2>
+
+      <h3>Диагностика OSPF</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Команда</th><th>Что показывает</th></tr></thead>
+          <tbody>
+            <tr><td><code>show ip ospf neighbor</code></td><td>Список OSPF-соседей и их состояние</td></tr>
+            <tr><td><code>show ip ospf interface tunnel0</code></td><td>Параметры OSPF на туннеле (auth, hello timer)</td></tr>
+            <tr><td><code>show ip ospf database</code></td><td>LSDB — база данных топологии</td></tr>
+            <tr><td><code>show ip route ospf</code></td><td>Маршруты, полученные по OSPF</td></tr>
+            <tr><td><code>show ip route</code></td><td>Полная таблица маршрутизации</td></tr>
+            <tr><td><code>debug ospf packet all</code></td><td>Дебаг OSPF-пакетов (выключить: <code>no debug all</code>)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Диагностика GRE</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Команда</th><th>Что делает</th></tr></thead>
+          <tbody>
+            <tr><td><code>ip -c a show tunnel0</code></td><td>Адрес и состояние туннеля</td></tr>
+            <tr><td><code>ip link show tunnel0</code></td><td>UP/DOWN, MTU, режим gre</td></tr>
+            <tr><td><code>ping 10.10.10.2</code></td><td>Связность через GRE</td></tr>
+            <tr><td><code>tcpdump -i ens20 proto gre</code></td><td>Перехват GRE-пакетов на uplink</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Сохранение конфига FRR</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">hq-rtr# write
+Building Configuration...
+Configuration saved to /etc/frr/frr.conf</code></pre>
+
+      <div class="callout warn">
+        <span class="icon">⚠️</span>
+        <div><strong>После reboot</strong> — FRR поднимается автоматически через systemd (<code>frr.service</code>), конфиг читается из <code>/etc/frr/frr.conf</code>. GRE-туннель поднимается через <code>systemctl restart network</code> (конфиг в <code>/etc/net/ifaces/tunnel0/</code>).</div>
+      </div>
+    </section>
+    
     <!-- 12. DHCP -->
     <section id="dhcp">
       <h2><span class="num">12</span>📡 DHCP на VLAN 200 (ISC DHCP)</h2>
@@ -1379,26 +1422,19 @@ allow 192.168.0.0/16</code></pre>
 # Инвентарь
 [root@br-srv ~]# mkdir -p /etc/ansible
 [root@br-srv ~]# nano /etc/ansible/hosts</code></pre>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">[hq]
-hq-srv.au-team.irpo ansible_port=2026 ansible_user=sshuser
-
-[br]
-br-rtr.au-team.irpo ansible_port=2026 ansible_user=sshuser
-
-[routers]
-hq-rtr.au-team.irpo ansible_port=2026 ansible_user=sshuser
-br-rtr.au-team.irpo ansible_port=2026 ansible_user=sshuser</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">HQ-SRV ansible_port=2026 ansible_user=sshuser ansible_password=P@ssw0rd
+BR-SRV ansible_port=2026 ansible_user=sshuser ansible_password=P@ssw0rd
+HQ-CLI ansible_host=192.168.200.10 ansible_user=stud    ansible_password=P@ss090206!
+        
+HQ-RTR ansible_port=2026 ansible_user=sshuser ansible_password=P@ssw0rd
+BR-RTR ansible_port=2026 ansible_user=sshuser ansible_password=P@ssw0rd</code></pre>
 
       <div class="callout info">
         <span class="icon">💡</span>
         <div><strong>Роутеры в Ansible</strong> — теперь HQ-RTR и BR-RTR тоже Linux-машины, поэтому ими управляет Ansible как обычными Linux-хостами, а не через сетевой модуль. Плейбуки пишутся стандартно.</div>
       </div>
 
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash"># SSH-ключ для беспарольного доступа
-[root@br-srv ~]# ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519 -N ""
-[root@br-srv ~]# ssh-copy-id -p 2026 -i ~/.ssh/id_ed25519.pub sshuser@hq-srv.au-team.irpo
-
-# Проверка
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash"># Проверка
 [root@br-srv ~]# ansible all -m ping</code></pre>
     </section>
 
@@ -1493,49 +1529,6 @@ testapp   site:latest    "sh -c 'python3 -m a"    app        2 minutes ago  Up 2
       <h3>8. Заходим на 192.168.0.2 с HQ-CLI</h3>
       <img src="./screenshots/check-docker.png" class="screenshot" alt="Проверка приложения в браузере">
 </section>
-
-    <!-- FRR cheatsheet -->
-    <section id="frr-cheatsheet" style="margin-top: 32px;">
-      <h2><span class="num">★</span>🦓 Шпаргалка FRR vtysh</h2>
-
-      <h3>Диагностика OSPF</h3>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Команда</th><th>Что показывает</th></tr></thead>
-          <tbody>
-            <tr><td><code>show ip ospf neighbor</code></td><td>Список OSPF-соседей и их состояние</td></tr>
-            <tr><td><code>show ip ospf interface tunnel0</code></td><td>Параметры OSPF на туннеле (auth, hello timer)</td></tr>
-            <tr><td><code>show ip ospf database</code></td><td>LSDB — база данных топологии</td></tr>
-            <tr><td><code>show ip route ospf</code></td><td>Маршруты, полученные по OSPF</td></tr>
-            <tr><td><code>show ip route</code></td><td>Полная таблица маршрутизации</td></tr>
-            <tr><td><code>debug ospf packet all</code></td><td>Дебаг OSPF-пакетов (выключить: <code>no debug all</code>)</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h3>Диагностика GRE</h3>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Команда</th><th>Что делает</th></tr></thead>
-          <tbody>
-            <tr><td><code>ip -c a show tunnel0</code></td><td>Адрес и состояние туннеля</td></tr>
-            <tr><td><code>ip link show tunnel0</code></td><td>UP/DOWN, MTU, режим gre</td></tr>
-            <tr><td><code>ping 10.10.10.2</code></td><td>Связность через GRE</td></tr>
-            <tr><td><code>tcpdump -i ens20 proto gre</code></td><td>Перехват GRE-пакетов на uplink</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h3>Сохранение конфига FRR</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">hq-rtr# write
-Building Configuration...
-Configuration saved to /etc/frr/frr.conf</code></pre>
-
-      <div class="callout warn">
-        <span class="icon">⚠️</span>
-        <div><strong>После reboot</strong> — FRR поднимается автоматически через systemd (<code>frr.service</code>), конфиг читается из <code>/etc/frr/frr.conf</code>. GRE-туннель поднимается через <code>systemctl restart network</code> (конфиг в <code>/etc/net/ifaces/tunnel0/</code>).</div>
-      </div>
-    </section>
 
   
     <!-- ===== Модуль 3: Дополнительные сервисы ===== -->
