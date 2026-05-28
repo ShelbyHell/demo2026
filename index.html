@@ -1205,54 +1205,7 @@ hquser1 is not allowed to run sudo /usr/bin/systemctl ...</code></pre>
     <section id="raid">
       <h2><span class="num">16</span>💾 RAID 0 на HQ-SRV</h2>
 
-      <h3>Шаг 0: Добавить диски в Proxmox перед настройкой RAID</h3>
-      <div class="callout info">
-        <span class="icon">💡</span>
-        <div><strong>Сначала добавляем диски в VM через интерфейс Proxmox</strong>
-          Это нужно сделать до того как заходить на HQ-SRV и запускать mdadm.
-        </div>
-      </div>
-
-      <h4>1. Открыть настройки VM в Proxmox</h4>
-      <p>В веб-интерфейсе Proxmox: выбрать нужную VM (например <strong>HQ-SRV</strong>) → вкладка <strong>Hardware</strong> → кнопка <strong>Add</strong> → <strong>Hard Disk</strong>.</p>
-
-      <h4>2. Настройки первого диска</h4>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Параметр</th><th>Значение</th></tr></thead>
-          <tbody>
-            <tr><td>Bus/Device</td><td><code>SCSI</code> или <code>VirtIO Block</code></td></tr>
-            <tr><td>Storage</td><td>выбрать нужное хранилище (например <code>local-lvm</code>)</td></tr>
-            <tr><td>Disk size</td><td>нужный размер, например <code>10G</code></td></tr>
-            <tr><td>Cache</td><td><code>No cache</code></td></tr>
-            <tr><td>Backup</td><td>можно снять галочку</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <p>Нажать <strong>Add</strong>. Повторить для второго диска — он добавится как следующий SCSI/VirtIO-девайс.</p>
-
-      <div class="callout warn">
-        <span class="icon">⚠️</span>
-        <div><strong>Не перезагружать VM сразу</strong> — добавить оба диска, потом один раз перезагрузить (или сделать <strong>холодный старт</strong>, если VM выключена). Горячее добавление работает только при VirtIO.
-        </div>
-      </div>
-
-      <h4>3. Убедиться что диски видны в VM</h4>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# lsblk
-NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
-sda      8:0    0   20G  0 disk          ← системный диск
-├─sda1   8:1    0   19G  0 part /
-└─sda2   8:2    0    1G  0 part [SWAP]
-sdb      8:16   0   10G  0 disk          ← новый диск 1
-sdc      8:32   0   10G  0 disk          ← новый диск 2</code></pre>
-
-      <div class="callout success">
-        <span class="icon">✅</span>
-        <div><strong>Если <code>sdb</code> и <code>sdc</code> видны</strong> — можно переходить к созданию RAID ниже.</div>
-      </div>
-
-      <h3>Создание RAID 0 через mdadm</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><h3>Шаг 0: Добавить диски в Proxmox</h3>
+      <h3>Шаг 0: Добавить диски в Proxmox</h3>
       <div class="callout info">
         <span class="icon">💡</span>
         <div><strong>Сначала добавляем диски в VM через веб-интерфейс Proxmox</strong> — до того как запускать mdadm на HQ-SRV.</div>
@@ -1270,19 +1223,25 @@ sdc      8:32   0   10G  0 disk          ← новый диск 2</code></pre>
             <tr><td>Storage</td><td><code>local-lvm</code> (или другое хранилище)</td></tr>
             <tr><td>Disk size</td><td>например <code>10G</code></td></tr>
             <tr><td>Cache</td><td><code>No cache</code></td></tr>
+            <tr><td>Backup</td><td>можно снять галочку</td></tr>
           </tbody>
         </table>
       </div>
-      <p>Нажать <strong>Add</strong>. Повторить для второго диска. Перезагрузить VM.</p>
+      <p>Нажать <strong>Add</strong>. Повторить для второго диска. Затем перезагрузить VM.</p>
 
       <div class="callout warn">
         <span class="icon">⚠️</span>
-        <div><strong>Добавить оба диска, потом один раз перезагрузить VM</strong> — не перезагружать после каждого диска.</div>
+        <div><strong>Добавить оба диска, потом один раз перезагрузить</strong> — не перезагружать после каждого диска.</div>
       </div>
 
-      <h4>3. Убедиться что диски видны</h4>
+      <h4>3. Убедиться что диски видны в VM</h4>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# lsblk
-# sda — системный диск, sdb и sdc — новые</code></pre>
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+sda      8:0    0   20G  0 disk
+├─sda1   8:1    0   19G  0 part /
+└─sda2   8:2    0    1G  0 part [SWAP]
+sdb      8:16   0   10G  0 disk     ← новый диск 1
+sdc      8:32   0   10G  0 disk     ← новый диск 2</code></pre>
 
       <div class="callout success">
         <span class="icon">✅</span>
@@ -1290,7 +1249,7 @@ sdc      8:32   0   10G  0 disk          ← новый диск 2</code></pre>
       </div>
 
       <h3>Создание RAID 0 через mdadm</h3>
-      <code class="language-bash">[root@hq-srv ~]# apt-get install -y mdadm
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[root@hq-srv ~]# apt-get install -y mdadm
 [root@hq-srv ~]# lsblk                        # определить sdb, sdc
 [root@hq-srv ~]# mdadm --zero-superblock --force /dev/sdb /dev/sdc
 [root@hq-srv ~]# mdadm --create /dev/md0 --level=0 --raid-devices=2 /dev/sdb /dev/sdc
