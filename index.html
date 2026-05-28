@@ -129,7 +129,7 @@
             <table>
               <tr><td><kbd>Ctrl</kbd>+<kbd>O</kbd>, <kbd>Enter</kbd></td><td>сохранить</td></tr>
               <tr><td><kbd>Ctrl</kbd>+<kbd>X</kbd></td><td>выйти</td></tr>
-              <tr><td><kbd>Ctrl</kbd>+<kbd>W</kbd></td><td>поиск</td></tr>
+              <tr><td><kbd>Ctrl</kbd>+<kbd>F</kbd></td><td>поиск</td></tr>
               <tr><td><kbd>Ctrl</kbd>+<kbd>K</kbd> / <kbd>Ctrl</kbd>+<kbd>U</kbd></td><td>вырезать / вставить</td></tr>
               <tr><td><kbd>Alt</kbd>+<kbd>U</kbd></td><td>отменить</td></tr>
             </table>
@@ -820,8 +820,7 @@ subnet 192.168.200.0 netmask 255.255.255.0 {
 
       <h3>2. <code>options.conf</code> — слушающий адрес, форвардер, доступ</h3>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# nano /var/lib/bind/etc/options.conf</code></pre>
-      <div class="kbd-strip"><span class="label">nano:</span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">O</kbd>, <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">X</kbd> <span class="desc">— выйти</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">W</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">K</kbd> / <kbd class="k">Ctrl</kbd>+<kbd class="k">U</kbd> <span class="desc">— вырезать / вставить строку</span></span><span class="item"><kbd class="k">Alt</kbd>+<kbd class="k">U</kbd> <span class="desc">— отменить</span></span></div>
-
+      <div class="kbd-strip"><span class="label">nano:</span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">O</kbd>, <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">X</kbd> <span class="desc">— выйти</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">F</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">K</kbd> / <kbd class="k">Ctrl</kbd>+<kbd class="k">U</kbd> <span class="desc">— вырезать / вставить строку</span></span><span class="item"><kbd class="k">Alt</kbd>+<kbd class="k">U</kbd> <span class="desc">— отменить</span></span></div>
       <p>В файле меняем 3 строки. Поиск по строке — <kbd>Ctrl</kbd>+<kbd>W</kbd>, ввести искомое (например <code>listen-on</code>), <kbd>Enter</kbd>.</p>
 
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">diff</span></div><code class="language-diff">- listen-on    { 127.0.0.1; };
@@ -868,8 +867,7 @@ subnet 192.168.200.0 netmask 255.255.255.0 {
 
       <h3>3. <code>rfc1912.conf</code> — описание зон</h3>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# nano /var/lib/bind/etc/rfc1912.conf</code></pre>
-      <div class="kbd-strip"><span class="label">nano:</span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">O</kbd>, <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">X</kbd> <span class="desc">— выйти</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">W</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">K</kbd> / <kbd class="k">Ctrl</kbd>+<kbd class="k">U</kbd> <span class="desc">— вырезать / вставить строку</span></span><span class="item"><kbd class="k">Alt</kbd>+<kbd class="k">U</kbd> <span class="desc">— отменить</span></span></div>
-      <p>В конец файла добавить:</p>
+      <div class="kbd-strip"><span class="label">nano:</span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">O</kbd>, <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">X</kbd> <span class="desc">— выйти</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">F</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">K</kbd> / <kbd class="k">Ctrl</kbd>+<kbd class="k">U</kbd> <span class="desc">— вырезать / вставить строку</span></span><span class="item"><kbd class="k">Alt</kbd>+<kbd class="k">U</kbd> <span class="desc">— отменить</span></span></div>      <p>В конец файла добавить:</p>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bind</span></div><code class="language-plaintext">zone "au-team.irpo" {
     type master;
     file "au-team.irpo";
@@ -892,8 +890,7 @@ zone "200.168.192.in-addr.arpa" {
 
       <h3>5. Прямая зона <code>au-team.irpo</code></h3>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# nano /var/lib/bind/etc/zone/au-team.irpo</code></pre>
-      <div class="kbd-strip"><span class="label">nano:</span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">O</kbd>, <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">X</kbd> <span class="desc">— выйти</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">W</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">K</kbd> / <kbd class="k">Ctrl</kbd>+<kbd class="k">U</kbd> <span class="desc">— вырезать / вставить строку</span></span><span class="item"><kbd class="k">Alt</kbd>+<kbd class="k">U</kbd> <span class="desc">— отменить</span></span></div>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bind-zone</span></div><code class="language-plaintext">$TTL    1D
+      <div class="kbd-strip"><span class="label">nano:</span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">O</kbd>, <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">X</kbd> <span class="desc">— выйти</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">F</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">K</kbd> / <kbd class="k">Ctrl</kbd>+<kbd class="k">U</kbd> <span class="desc">— вырезать / вставить строку</span></span><span class="item"><kbd class="k">Alt</kbd>+<kbd class="k">U</kbd> <span class="desc">— отменить</span></span></div>      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bind-zone</span></div><code class="language-plaintext">$TTL    1D
 @       IN  SOA     au-team.irpo. root.au-team.irpo. (
                                 2025062300  ; serial
                                 12H         ; refresh
@@ -915,8 +912,7 @@ br-rtr  IN  A       192.168.0.1</code></pre>
 
       <h3>6. Обратная зона <code>100.168.192.in-addr.arpa</code></h3>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# nano /var/lib/bind/etc/zone/100.168.192.in-addr.arpa</code></pre>
-      <div class="kbd-strip"><span class="label">nano:</span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">O</kbd>, <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">X</kbd> <span class="desc">— выйти</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">W</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">K</kbd> / <kbd class="k">Ctrl</kbd>+<kbd class="k">U</kbd> <span class="desc">— вырезать / вставить строку</span></span><span class="item"><kbd class="k">Alt</kbd>+<kbd class="k">U</kbd> <span class="desc">— отменить</span></span></div>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bind-zone</span></div><code class="language-plaintext">$TTL    1D
+      <div class="kbd-strip"><span class="label">nano:</span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">O</kbd>, <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">X</kbd> <span class="desc">— выйти</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">F</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">K</kbd> / <kbd class="k">Ctrl</kbd>+<kbd class="k">U</kbd> <span class="desc">— вырезать / вставить строку</span></span><span class="item"><kbd class="k">Alt</kbd>+<kbd class="k">U</kbd> <span class="desc">— отменить</span></span></div>      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bind-zone</span></div><code class="language-plaintext">$TTL    1D
 @       IN  SOA     au-team.irpo. root.au-team.irpo. (
                                 2025062300  ; serial
                                 12H         ; refresh
@@ -930,8 +926,7 @@ br-rtr  IN  A       192.168.0.1</code></pre>
 
       <h3>7. Обратная зона <code>200.168.192.in-addr.arpa</code></h3>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# nano /var/lib/bind/etc/zone/200.168.192.in-addr.arpa</code></pre>
-      <div class="kbd-strip"><span class="label">nano:</span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">O</kbd>, <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">X</kbd> <span class="desc">— выйти</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">W</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">K</kbd> / <kbd class="k">Ctrl</kbd>+<kbd class="k">U</kbd> <span class="desc">— вырезать / вставить строку</span></span><span class="item"><kbd class="k">Alt</kbd>+<kbd class="k">U</kbd> <span class="desc">— отменить</span></span></div>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bind-zone</span></div><code class="language-plaintext">$TTL    1D
+      <div class="kbd-strip"><span class="label">nano:</span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">O</kbd>, <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">X</kbd> <span class="desc">— выйти</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">F</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">K</kbd> / <kbd class="k">Ctrl</kbd>+<kbd class="k">U</kbd> <span class="desc">— вырезать / вставить строку</span></span><span class="item"><kbd class="k">Alt</kbd>+<kbd class="k">U</kbd> <span class="desc">— отменить</span></span></div>      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bind-zone</span></div><code class="language-plaintext">$TTL    1D
 @       IN  SOA     au-team.irpo. root.au-team.irpo. (
                                 2025062300  ; serial
                                 12H         ; refresh
@@ -1009,29 +1004,6 @@ _default/au-team.irpo/IN: bad zone</code></pre>
       <p>Ожидаемый результат — <code>3 received, 0% packet loss</code>: значит резолвинг через локальный BIND с форвардингом во внешний DNS работает.</p>
 
       <h3>12. Проверка с HQ-CLI</h3>
-      <h4>Записи типа A</h4>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[user@hq-cli ~]$ host hq-srv.au-team.irpo
-hq-srv.au-team.irpo has address 192.168.100.2
-
-[user@hq-cli ~]$ host hq-cli.au-team.irpo
-hq-cli.au-team.irpo has address 192.168.200.2
-
-[user@hq-cli ~]$ host hq-rtr.au-team.irpo
-hq-rtr.au-team.irpo has address 192.168.200.1
-hq-rtr.au-team.irpo has address 192.168.99.1
-hq-rtr.au-team.irpo has address 192.168.100.1
-
-[user@hq-cli ~]$ host docker.au-team.irpo
-docker.au-team.irpo has address 172.16.1.1
-
-[user@hq-cli ~]$ host web.au-team.irpo
-web.au-team.irpo has address 172.16.2.1
-
-[user@hq-cli ~]$ host br-rtr.au-team.irpo
-br-rtr.au-team.irpo has address 192.168.0.1
-
-[user@hq-cli ~]$ host br-srv.au-team.irpo
-br-srv.au-team.irpo has address 192.168.0.2</code></pre>
 
       <h4>Записи типа PTR</h4>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[user@hq-cli ~]$ host 192.168.100.1
@@ -1167,8 +1139,9 @@ EOF
 
       <h3>9. Ввод HQ-CLI в домен</h3>
       <p>На <strong>HQ-CLI</strong> сперва указать BR-SRV в качестве DNS (либо вписать в выдачу DHCP на HQ-RTR), затем ставится <code>task-auth-ad-sssd</code> и через ЦУС выполняется ввод в домен:</p>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[stud@hq-cli ~]$ host au-team.irpo                   # должен резолвиться
-[stud@hq-cli ~]$ sudo apt-get update && sudo apt-get install -y task-auth-ad-sssd</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[stud@hq-cli ~]$ su
+[root@hq-cli ~]$ host au-team.irpo                   # должен резолвиться
+[root@hq-cli ~]$ apt-get update && apt-get install -y task-auth-ad-sssd</code></pre>
       <ol>
         <li>Открыть <em>Центр управления системой → Аутентификация → Active Directory</em>.</li>
         <li>Заполнить домен <code>AU-TEAM.IRPO</code>, рабочая группа <code>AU-TEAM</code>, имя/пароль администратора домена.</li>
@@ -1191,9 +1164,7 @@ Cmnd_Alias HQ_CMDS = /bin/cat, /bin/grep, /usr/bin/id
 "%hq@au-team.irpo" ALL=(ALL) NOPASSWD: HQ_CMDS
 EOF
 
-[root@hq-cli ~]# chmod 440 /etc/sudoers.d/hq-domain
-[root@hq-cli ~]# visudo -cf /etc/sudoers.d/hq-domain     # синтаксическая проверка
-/etc/sudoers.d/hq-domain: parsed OK</code></pre>
+[root@hq-cli ~]# chmod 440 /etc/sudoers.d/hq-domain</code></pre>
 
       <div class="callout info">
         <span class="icon">💡</span>
@@ -1218,7 +1189,8 @@ hquser1 is not allowed to run sudo /usr/bin/systemctl ...</code></pre>
       <div class="callout note">
         <span class="icon">📋</span>
         <div><strong>Если всё-таки нужен <code>libnss-role</code>/<code>roleadd</code></strong>Поставить пакет и сделать привязку файлом в <code>/etc/role.d/</code>:
-          <pre style="margin:6px 0 0;"><code class="language-bash">[root@hq-cli ~]# apt-get install -y libnss-role
+          <pre style="margin:6px 0 0;"><code class="language-bash">[student@hq-cli]$ su
+[root@hq-cli ~]# apt-get install -y libnss-role
 [root@hq-cli ~]# mkdir -p /etc/role.d
 [root@hq-cli ~]# echo wheel > /etc/role.d/hq      # эквивалент `roleadd hq wheel`</code></pre>
           Но в нашем варианте без <code>libnss-role</code> в этом нет необходимости — <code>sudoers.d/hq-domain</code> делает то же самое.
@@ -1274,8 +1246,7 @@ sdc      8:32   0    1G  0 disk</code></pre>
       <h3>7. Точка монтирования и <code>/etc/fstab</code></h3>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# mkdir -p /raid
 [root@hq-srv ~]# nano /etc/fstab</code></pre>
-      <div class="kbd-strip"><span class="label">nano:</span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">O</kbd>, <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">X</kbd> <span class="desc">— выйти</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">W</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">K</kbd> / <kbd class="k">Ctrl</kbd>+<kbd class="k">U</kbd> <span class="desc">— вырезать / вставить строку</span></span><span class="item"><kbd class="k">Alt</kbd>+<kbd class="k">U</kbd> <span class="desc">— отменить</span></span></div>
-      <p>Добавить строку (можно по UUID — надёжнее, либо по имени устройства):</p>
+      <div class="kbd-strip"><span class="label">nano:</span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">O</kbd>, <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">X</kbd> <span class="desc">— выйти</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">F</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">K</kbd> / <kbd class="k">Ctrl</kbd>+<kbd class="k">U</kbd> <span class="desc">— вырезать / вставить строку</span></span><span class="item"><kbd class="k">Alt</kbd>+<kbd class="k">U</kbd> <span class="desc">— отменить</span></span></div>      <p>Добавить строку (можно по UUID — надёжнее, либо по имени устройства):</p>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext"># RAID 0 (sdb + sdc) → /raid
 UUID=&lt;UUID-из-blkid&gt;   /raid   ext4   defaults   0 0
 # либо
@@ -1334,8 +1305,7 @@ Filesystem      Size  Used Avail Use% Mounted on
 
       <p><strong>3.</strong> Прописываем экспорт в <code>/etc/exports</code>:</p>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# nano /etc/exports</code></pre>
-      <div class="kbd-strip"><span class="label">nano:</span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">O</kbd>, <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">X</kbd> <span class="desc">— выйти</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">W</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">K</kbd> / <kbd class="k">Ctrl</kbd>+<kbd class="k">U</kbd> <span class="desc">— вырезать / вставить строку</span></span><span class="item"><kbd class="k">Alt</kbd>+<kbd class="k">U</kbd> <span class="desc">— отменить</span></span></div>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">/raid/nfs    192.168.200.0/24(rw,sync,no_root_squash)</code></pre>
+      <div class="kbd-strip"><span class="label">nano:</span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">O</kbd>, <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">X</kbd> <span class="desc">— выйти</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">F</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">K</kbd> / <kbd class="k">Ctrl</kbd>+<kbd class="k">U</kbd> <span class="desc">— вырезать / вставить строку</span></span><span class="item"><kbd class="k">Alt</kbd>+<kbd class="k">U</kbd> <span class="desc">— отменить</span></span></div>      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext">/raid/nfs    192.168.200.0/24(rw,sync,no_root_squash)</code></pre>
       <p>Где:</p>
       <ul>
         <li><code>/raid/nfs</code> — экспортируемый ресурс.</li>
@@ -1359,7 +1329,8 @@ Export list for localhost:
       <h3>HQ-CLI — клиент</h3>
 
       <p><strong>1.</strong> Пакеты клиента NFS:</p>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-cli ~]# apt-get update && apt-get install -y nfs-utils nfs-clients</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[stud@hq-cli]$ su
+[root@hq-cli ~]# apt-get update && apt-get install -y nfs-utils nfs-clients</code></pre>
 
       <p><strong>2.</strong> Точка монтирования:</p>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-cli ~]# mkdir -p /mnt/nfs
@@ -1367,8 +1338,7 @@ Export list for localhost:
 
       <p><strong>3.</strong> Автомонтирование через <code>/etc/fstab</code>:</p>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-cli ~]# nano /etc/fstab</code></pre>
-      <div class="kbd-strip"><span class="label">nano:</span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">O</kbd>, <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">X</kbd> <span class="desc">— выйти</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">W</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">K</kbd> / <kbd class="k">Ctrl</kbd>+<kbd class="k">U</kbd> <span class="desc">— вырезать / вставить строку</span></span><span class="item"><kbd class="k">Alt</kbd>+<kbd class="k">U</kbd> <span class="desc">— отменить</span></span></div>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext"># NFS share с HQ-SRV → /mnt/nfs
+      <div class="kbd-strip"><span class="label">nano:</span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">O</kbd>, <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">X</kbd> <span class="desc">— выйти</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">F</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">K</kbd> / <kbd class="k">Ctrl</kbd>+<kbd class="k">U</kbd> <span class="desc">— вырезать / вставить строку</span></span><span class="item"><kbd class="k">Alt</kbd>+<kbd class="k">U</kbd> <span class="desc">— отменить</span></span></div>      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">plaintext</span></div><code class="language-plaintext"># NFS share с HQ-SRV → /mnt/nfs
 192.168.100.2:/raid/nfs   /mnt/nfs   nfs   defaults,_netdev   0 0</code></pre>
       <p>Опция <code>_netdev</code> подсказывает systemd, что монтирование должно стартовать <em>после</em> появления сети — иначе при загрузке точка может не подняться.</p>
 
@@ -1659,8 +1629,9 @@ testapp   site:latest    "sh -c 'python3 -m a"    app        2 minutes ago  Up 2
       </div>
 
       <h3>Вариант 1: через apt-get (если пакет есть в репо)</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[stud@hq-cli ~]$ sudo apt-get update
-[stud@hq-cli ~]$ sudo apt-get install -y yandex-browser-stable</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash">[stud@hq-cli]$ su
+[stud@hq-cli ~]$ apt-get update
+[stud@hq-cli ~]$ apt-get install -y yandex-browser-stable</code></pre>
 
       <h3>Вариант 2: ручная установка RPM</h3>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div><code class="language-bash"># Скачать пакет (если есть интернет)
