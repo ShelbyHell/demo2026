@@ -823,13 +823,13 @@ subnet 192.168.200.0 netmask 255.255.255.0 {
       <div class="kbd-strip"><span class="label">nano:</span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">O</kbd>, <kbd class="k">Enter</kbd> <span class="desc">— сохранить</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">X</kbd> <span class="desc">— выйти</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">F</kbd> <span class="desc">— поиск</span></span><span class="item"><kbd class="k">Ctrl</kbd>+<kbd class="k">K</kbd> / <kbd class="k">Ctrl</kbd>+<kbd class="k">U</kbd> <span class="desc">— вырезать / вставить строку</span></span><span class="item"><kbd class="k">Alt</kbd>+<kbd class="k">U</kbd> <span class="desc">— отменить</span></span></div>
       <p>В файле меняем 3 строки. Поиск по строке — <kbd>Ctrl</kbd>+<kbd>W</kbd>, ввести искомое (например <code>listen-on</code>), <kbd>Enter</kbd>.</p>
 
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">diff</span></div><code class="language-diff">- listen-on    { 127.0.0.1; };
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">diff</span></div><code class="language-diff">- //listen-on    { 127.0.0.1; };
 + listen-on    { 192.168.100.2; };
 
-- forwarders   { };
+- //forwarders   { };
 + forwarders   { 95.167.167.95; };
 
-- allow-query  { localhost; };
+- //allow-query  { localhost; };
 + allow-query  { any; };</code></pre>
 
       <p>Остальные строки в <code>options.conf</code> не трогаем. Итоговый рабочий блок выглядит так:</p>
