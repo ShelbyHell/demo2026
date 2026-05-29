@@ -996,6 +996,10 @@ _default/au-team.irpo/IN: bad zone</code></pre>
       <p>В выводе должно быть <code>Loaded: ... enabled</code> и <code>Active: active (running)</code>.</p>
 
       <h3>11. Проверка с HQ-SRV</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# echo "nameserver 192.168.100.2" > /etc/net/ifaces/ens19/resolv.conf
+[root@hq-srv ~]# echo "search au-team.irpo" >> /etc/net/ifaces/ens19/resolv.conf</code></pre>
+
+      <h3>11. Проверка с HQ-SRV</h3>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-srv ~]# cat /etc/resolv.conf
 # search au-team.irpo
 # nameserver 192.168.100.2
