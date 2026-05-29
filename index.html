@@ -1256,7 +1256,7 @@ sdc      8:32   0   10G  0 disk     ← новый диск 2</code></pre>
 [root@hq-srv ~]# mkfs.ext4 /dev/md0
 [root@hq-srv ~]# mkdir -p /raid
 [root@hq-srv ~]# echo "/dev/md0 /raid ext4 defaults 0 0" >> /etc/fstab
-[root@hq-srv ~]# mount -a
+[root@hq-srv ~]# mount -av
 [root@hq-srv ~]# mdadm --detail --scan >> /etc/mdadm.conf
 [root@hq-srv ~]# df -h /raid</code></pre>
     </section>
