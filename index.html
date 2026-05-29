@@ -1124,26 +1124,6 @@ EOF
 [root@br-srv ~]# samba-tool user list   | grep -E 'hquser|administrator'
 [root@br-srv ~]# samba-tool group listmembers hq</code></pre>
 
-      <h3>8. Назначаем DNS нашего домена в DHCP сервере</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-rtr ~]# nano /etc/dhcp/dhcpd.conf</code></pre>
-	        <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">diff</span></div><code class="language-diff">- domain-name-servers 192.168.100.2;
-+ domain-name-servers 192.168.0.2;</code></pre>
-		Перезагружаем DHCP-сервер
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-rtr ~]# systemctl restart dhcpd</code></pre>
-
-
-      <h3>8. Группа <code>hq</code> и пользователи <code>hquser1…5</code></h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@br-srv ~]# samba-tool group add hq
-
-[root@br-srv ~]# for i in {1..5}; do
-                     samba-tool user add hquser$i 'P@ssw0rd';
-                     samba-tool user setexpiry hquser$i --noexpiry;
-                     samba-tool group addmembers hq hquser$i;
-                 done
-
-[root@br-srv ~]# samba-tool user list   | grep -E 'hquser|administrator'
-[root@br-srv ~]# samba-tool group listmembers hq</code></pre>
-
       <h3>9. Ввод HQ-CLI в домен</h3>
       <p>На <strong>HQ-CLI</strong> сперва указать BR-SRV в качестве DNS (либо вписать в выдачу DHCP на HQ-RTR), затем ставится <code>task-auth-ad-sssd</code> и через ЦУС выполняется ввод в домен:</p>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[stud@hq-cli ~]$ su
