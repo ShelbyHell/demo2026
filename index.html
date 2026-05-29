@@ -1104,7 +1104,13 @@ nameserver 127.0.0.1
 EOF
 [root@br-srv ~]# systemctl restart network</code></pre>
 
-      <h3>7. Проверка домена</h3>
+      <h3>7. Настройка DNS на DHCP-сервере</h3>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-rtr ~]# nano /etc/dhcp/dhcpd.conf</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">diff</span></div><code class="language-diff">- option domain-name-servers 192.168.100.2;
++ option domain-name-servers 192.168.0.2;</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@hq-rtr ~]# systemctl restart network</code></pre>
+
+      <h3>8. Проверка домена</h3>
       <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@br-srv ~]# samba-tool domain info 127.0.0.1
 [root@br-srv ~]# samba-tool domain level show
 [root@br-srv ~]# host -t SRV _ldap._tcp.au-team.irpo
