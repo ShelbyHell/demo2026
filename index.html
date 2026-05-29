@@ -1064,7 +1064,7 @@ _default/au-team.irpo/IN: bad zone</code></pre>
       </div>
 
       <h3>1. Установка пакета</h3>
-      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@br-srv ~]# apt-get update && apt-get install -y task-samba-dc</code></pre>
+      <pre><div class="code-header"><div class="dots"><span></span><span></span><span></span></div><span class="lang">bash</span></div><code class="language-bash">[root@br-srv ~]# apt-get update && apt-get install -y bind-utils task-samba-dc</code></pre>
 
       <h3>2. Отключение конфликтующих служб</h3>
       <p>Samba DC поднимает свои LDAP, KDC и DNS — поэтому <code>krb5kdc</code>, <code>slapd</code>, <code>bind</code> и обычные <code>smb</code>/<code>nmb</code> нужно остановить:</p>
